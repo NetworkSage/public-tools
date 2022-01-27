@@ -222,7 +222,8 @@ def get_secflows_from_sample(uuid, is_public=False):
     result_json = json.loads(result.text)
     all_secflows = []
     for aggregated_activity in result_json["body"]:
-        all_secflows += [aggregated_activity["secflow"]]
+        print("Activity:", aggregated_activity)
+        all_secflows += [aggregated_activity]
 
     return all_secflows
 
@@ -443,12 +444,13 @@ def retrieve_via_session(**kwargs):
 
 def main():
     # Do some tests
-    #print("Trying to get just secflows from private sample:")
-    #result = get_secflows_from_sample("00dc397c3f85472b9c7f4203c408e4fb")
-    #if result is not None:
-    #    print("Success")
-    #else:
-    #    print("Failed!")
+    print("Trying to get just secflows from private sample:")
+    result = get_secflows_from_sample("00dc397c3f85472b9c7f4203c408e4fb")
+    if result is not None:
+        print("Success")
+    else:
+        print("Failed!")
+    '''
     public_uuid = "NzhmZjIxMWMtMjZjNi00OGZjLTgwM2UtYzNmZWM3MmNjOTU0I2hhc2gjMDBkYzM5N2MzZjg1NDcyYjljN2Y0MjAzYzQwOGU0ZmI="
     print("Trying to get just secflows from public sample:")
     result = get_secflows_from_sample(public_uuid, is_public=True)
@@ -490,5 +492,6 @@ def main():
         print("Success. Found", str(len(agg)), "activities!")
     else:
         print("Failed!")
+    '''
 
 main()
