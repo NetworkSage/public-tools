@@ -12,7 +12,7 @@ def had_error(response):
     """
 
     if response.status_code != requests.codes.ok:
-        print("Error!")
+        print("Error!", response.text)
         return True
     json_data = json.loads(response.text)
     if json_data["error"]:
@@ -35,19 +35,18 @@ def upload_sample(sample_name, sample_data, sample_type):
             + body: a message about acceptance of the sample
     """
 
-    upload_url = "https://api.seclarity.io/upload/v1.0"
+    upload_url = "https://api.seclarity.io/upload/v1.0/uploader"
 
     files = { "file": (sample_name
                         , sample_data
                         , "application/octet-stream"
                         )
             }
-
-
     request_headers = { "apikey": api_key }
 
-    request_data = { "type": sample_type }
-
+    request_data = { "type": sample_type
+                    , "fileName": sample_name
+                    }
     result = requests.post(upload_url
                             , headers=request_headers
                             , files=files
@@ -76,11 +75,15 @@ def list_my_samples():
                             NetworkSage
     """
 
-    list_url = "https://api.seclarity.io/upload/v1.0/list" #NOTE: THIS MAY BE WRONG!
+    list_url = "https://api.seclarity.io/upload/v1.0/uploads/list"
 
     request_headers = { "apikey": api_key }
     result = requests.get(list_url, headers=request_headers)
-    return result
+    if had_error(result):
+        return None
+    result_json = json.loads(result.text)
+    list_of_samples = result_json["body"]
+    return list_of_samples
 
 
 def get_uuid_for_uploaded_sample(sample_name, upload_time):
@@ -444,12 +447,27 @@ def retrieve_via_session(**kwargs):
 
 def main():
     # Do some tests
+    '''
+    print("List:")
+    res = list_my_samples()
+    print("Result", res)
+    '''
+
+    sample_name = "david_test.sf" #"shortened_test.pcap" #"2021-11-05-TA551-BazarLoader-with-CobaltStrike-and-DarkVNC.pcap" #
+    with open(sample_name, 'rb') as indata:
+        sample_data = indata.read()
+    sample_type = "secflow" #"pcap"
+    result = upload_sample(sample_name, sample_data, sample_type)
+    print("Result is", result.text)
+
+    '''
     print("Trying to get just secflows from private sample:")
     result = get_secflows_from_sample("00dc397c3f85472b9c7f4203c408e4fb")
     if result is not None:
         print("Success")
     else:
         print("Failed!")
+    '''
     '''
     public_uuid = "NzhmZjIxMWMtMjZjNi00OGZjLTgwM2UtYzNmZWM3MmNjOTU0I2hhc2gjMDBkYzM5N2MzZjg1NDcyYjljN2Y0MjAzYzQwOGU0ZmI="
     print("Trying to get just secflows from public sample:")
