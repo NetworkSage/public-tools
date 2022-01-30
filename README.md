@@ -79,7 +79,7 @@ Returns the number of global samples a given Secflow has been observed in. This 
 **Relevant Wrapper:** `get_global_count_for_secflow`
 
 #### 7. Get Metadata about a Destination
-**Endpoint URL:** `https://api.seclarity.io/sec/v1.0/destinations/<destination_name_:port>`
+**Endpoint URL:** `https://api.seclarity.io/sec/v1.0/destinations/<destination_name:port>`
 
 Returns any metadata we know for the particular Destination. This can include:
 * Title
@@ -130,16 +130,13 @@ Returns any metadata we know for this particular Event (made up of two or more B
 
 ## Other Useful Information
 ### Helper Functions
-This repository contains several helper functions to make it easier to perform common actions with the system more easily.
+This repository contains several helper functions to make it easier to perform common actions with the platform more easily.
 
-1. `get_aggregated_data_for_sample`
-Because the API endpoints for public and private samples return data differently, this function wraps them to return data identically.
+1. `get_aggregated_data_for_sample` wraps the API endpoints for public and private samples to return data identically, since the endpoints provide data differently.
 
-2. `get_uuid_for_uploaded_sample`
-Everything related to a particular sample requires the sample's UUID. Samples that are public have both a public and a private UUID, while those that are private have only the latter. This wrapper makes it easy to get back the UUID you need.
+2. `get_uuid_for_uploaded_sample` makes it easy to get back either the public or private UUID for a sample. Samples that are public have both a public and a private UUID, while those that are private have only the latter. All later sample analysis requires one of these UUIDs.
 
-3. `wait_for_sample_processing`
-A sample will generally take somewhere between 30 and 90 seconds to be processed by the system (depending on load, size of sample, etc...). Because the APIs that work with a sample's data require the sample to be processed, this function polls the system to identify when the data is ready.
+3. `wait_for_sample_processing` polls the platform to identify when the data is ready to be reviewed. A sample will generally take somewhere between 30 and 90 seconds to be processed by the system (depending on load, size of sample, etc...).
 
 
 ### Supported File Formats
