@@ -1,10 +1,23 @@
+"""
+    Copyright (c) 2022 David Pearson (david@seclarity.io)
+    Date: 01/30/2022
+    This file contains wrappers and other helper functions for the current version of public APIs available to users of NetworkSage. To request an API key, please register for an account at https://networksage.seclarity.io/register.
+
+    This software is provided under the Apache Software License.
+    See the accompanying LICENSE file for more information.
+"""
+
 import requests
 import json
 import threading
 import os
+from datetime import datetime
+import time
 
 my_api_key_var = "NETWORKSAGE_API_KEY"
 api_key = os.environ.get(my_api_key_var)
+if api_key is None:
+    print("Missing API Key. Please type export NETWORKSAGE_API_KEY='<your_api_key>' in your terminal to set up.")
 
 
 def had_error(response):
@@ -12,7 +25,7 @@ def had_error(response):
     """
 
     if response.status_code != requests.codes.ok:
-        print("Error!", response.text)
+        print("Error:", response.text)
         return True
     json_data = json.loads(response.text)
     if json_data["error"]:
@@ -86,18 +99,17 @@ def list_my_samples():
     return list_of_samples
 
 
-def get_uuid_for_uploaded_sample(sample_name, upload_time):
+def get_uuid_for_uploaded_sample(sample_name, upload_time, get_public_uuid=False):
     """Wraps a couple of APIs to help a user find a sample that has been
         uploaded at a (roughly) known time. Expects the upload_time to be in epoch time as an integer.
     """
 
-    list_result = list_my_samples()
-    if had_error(list_result):
-        return None
+    files_list = list_my_samples()
+    if files_list is None:
+        return files_list
 
     uuid = None
     time_format = "%Y-%m-%dT%H:%M:%S.%f"
-    files_list = list_json["body"]
     for file_info in files_list:
         try:
             if file_info["fileName"] == sample_name and file_info["processed"] == "false":
@@ -111,6 +123,19 @@ def get_uuid_for_uploaded_sample(sample_name, upload_time):
                             )
                 if abs(sample_uploaded_time - upload_time) < 120:
                     uuid = file_info["uuid"]
+                    if not get_public_uuid:
+                        break
+                    else:
+                        sample_metadata = get_private_sample_metadata(uuid)
+                        if sample_metadata is not None:
+                            try:
+                                link = sample_metadata["link"]
+                                uuid = link[link.rfind("/"):]
+                            except:
+                                uuid = None
+                        else:
+                            print("Couldn't find requested sample's public uuid!")
+                            uuid = None
                     break
         except:
             continue # ignore malformed items, if they exist
@@ -131,7 +156,7 @@ def get_private_sample_metadata(uuid):
     """
     sample_id = uuid
 
-    endpoint_url = "https://api.seclarity.io/sec/v1.0/samples/"+sample_id
+    endpoint_url = "https://api.seclarity.io/sec/v1.0/samples/" + sample_id
     request_headers = { "apikey": api_key }
     result = requests.get(endpoint_url, headers=request_headers)
 
@@ -163,14 +188,11 @@ def wait_for_sample_processing(uuid):
             break # superfluous?
 
 
-def get_metadata_from_public_sample(uuid
-                                    , metadata_type=None
-                                    , individual_flow_id=None):
+def get_public_sample_data(uuid, metadata_type=None, individual_flow_id=None):
     """Wrapper that returns just the requested metadata type for a public
         sample.
     """
     endpoint_url = "https://ns-genericservice.app.seclarity.io/public/secflows/v1/" + uuid + "/list/aggregated"
-    #"https://api.seclarity.io/sec/v1.0/public/samples/"+uuid+"/list/aggregated" # TBD on public endpoint rename
     result = requests.get(endpoint_url)
     if had_error(result):
         return None
@@ -183,7 +205,6 @@ def get_metadata_from_public_sample(uuid
     for activity in aggregated_activities:
         if individual_flow_id is not None:
             if activity["secflow"]["flowId"] == individual_flow_id:
-                print("Trying to grab", metadata_type, "info from", activity)
                 return activity[metadata_type]
             else:
                 continue
@@ -213,7 +234,7 @@ def get_secflows_from_sample(uuid, is_public=False):
         + sourcePackets: number of packets seen from the source
     """
     if is_public:
-        all_secflows = get_metadata_from_public_sample(uuid, "secflow")
+        all_secflows = get_public_sample_data(uuid, "secflow")
         return all_secflows
     else:
         endpoint_url = "https://api.seclarity.io/sec/v1.0/samples/"+uuid+"/list"
@@ -225,7 +246,7 @@ def get_secflows_from_sample(uuid, is_public=False):
     result_json = json.loads(result.text)
     all_secflows = []
     for aggregated_activity in result_json["body"]:
-        print("Activity:", aggregated_activity)
+        #print("Activity:", aggregated_activity)
         all_secflows += [aggregated_activity]
 
     return all_secflows
@@ -239,7 +260,7 @@ def get_global_count_for_secflow(secflow, uuid=None, is_public=False, session=No
     flowid = secflow["flowId"]
 
     if is_public:
-        count = get_metadata_from_public_sample(uuid, "flowIdCount", flowid)
+        count = get_public_sample_data(uuid, "flowIdCount", flowid)
         return count
 
     endpoint_url = "https://api.seclarity.io/sec/v1.0/secflows/" + flowid + "/count"
@@ -266,10 +287,10 @@ def get_destination_for_secflow(secflow, uuid=None, is_public=False, session=Non
 
     if is_public:
         flowid = secflow["flowId"]
-        destination = get_metadata_from_public_sample(uuid
-                                                    , "destination"
-                                                    , flowid
-                                                    )
+        destination = get_public_sample_data(uuid
+                                            , "destination"
+                                            , flowid
+                                            )
         return destination
 
     endpoint_url = "https://api.seclarity.io/sec/v1.0/destinations/" + name
@@ -294,10 +315,10 @@ def get_behavior_for_secflow(secflow, uuid=None, is_public=False, session=None):
     behavior = None
     flowid = secflow["flowId"]
     if is_public:
-        behavior = get_metadata_from_public_sample(uuid
-                                                    , "behavior"
-                                                    , flowid
-                                                    )
+        behavior = get_public_sample_data(uuid
+                                        , "behavior"
+                                        , flowid
+                                        )
         return behavior
 
     endpoint_url = "https://api.seclarity.io/sec/v1.0/behaviors/" + flowid
@@ -325,10 +346,10 @@ def get_event_for_secflow(secflow, uuid=None, is_public=False, session=None):
     eventid = secflow["eventId"]
     if is_public:
         flowid = secflow["flowId"]
-        event = get_metadata_from_public_sample(uuid
-                                                    , "event"
-                                                    , flowid
-                                                    )
+        event = get_public_sample_data(uuid
+                                        , "event"
+                                        , flowid
+                                        )
         return event
 
     endpoint_url = "https://api.seclarity.io/sec/v1.0/events/" + eventid
@@ -352,7 +373,7 @@ def get_aggregated_data_for_sample(uuid, is_public=False):
     """
     aggregated_activity = []
     if is_public:
-        aggregated_activity = get_metadata_from_public_sample(uuid)
+        aggregated_activity = get_public_sample_data(uuid)
     else:
         secflows = get_secflows_from_sample(uuid, is_public)
         if secflows is None:
@@ -361,11 +382,11 @@ def get_aggregated_data_for_sample(uuid, is_public=False):
         # set up aggregated activity list for population
         for secflow in secflows:
             aggregated_activity += [{"secflow": secflow
-                            , "destination": {}
-                            , "behavior": {}
-                            , "event": {}
-                            , "flowIdCount": 1 # default value that should ALWAYS be overwritten
-                            }]
+                                , "destination": {}
+                                , "behavior": {}
+                                , "event": {}
+                                , "flowIdCount": 1 # default value that should ALWAYS be overwritten
+                                }]
         count_collection_thread = threading.Thread(target=retrieve_via_session
                                     , kwargs={
                                             "activities":aggregated_activity
@@ -410,8 +431,8 @@ def retrieve_via_session(**kwargs):
     if metadata_type == "count":
         for activity in activities:
             count = get_global_count_for_secflow(activity["secflow"]
-                                            , session=session
-                                            )
+                                                , session=session
+                                                )
             if count == -1:
                 print("Error! This is a bug! Please file a ticket with dev@seclarity.io")
                 continue
@@ -447,29 +468,73 @@ def retrieve_via_session(**kwargs):
 
 def main():
     # Do some tests
-    '''
-    print("List:")
-    res = list_my_samples()
-    print("Result", res)
-    '''
 
-    sample_name = "david_test.sf" #"shortened_test.pcap" #"2021-11-05-TA551-BazarLoader-with-CobaltStrike-and-DarkVNC.pcap" #
+    print("Testing List:")
+    res = list_my_samples()
+    print("Found", str(len(res)), "samples")
+
+    '''
+    print("Testing Secflow upload")
+    sample_name = "tests/secflow_test.sf"
     with open(sample_name, 'rb') as indata:
         sample_data = indata.read()
-    sample_type = "secflow" #"pcap"
+    sample_type = "secflow"
     result = upload_sample(sample_name, sample_data, sample_type)
     print("Result is", result.text)
 
-    '''
-    print("Trying to get just secflows from private sample:")
-    result = get_secflows_from_sample("00dc397c3f85472b9c7f4203c408e4fb")
+    print("Testing PCAP upload")
+    sample_name = "tests/pcap_test.pcap"
+    with open(sample_name, 'rb') as indata:
+        sample_data = indata.read()
+    sample_type = "pcap"
+    result = upload_sample(sample_name, sample_data, sample_type)
+    print("Result is", result.text)
+
+    print("Testing Zeek upload without DNS log")
+    sample_name = "tests/test_conn.log"
+    with open(sample_name, 'rb') as indata:
+        sample_data = indata.read()
+    sample_type = "zeek"
+    result = upload_sample(sample_name, sample_data, sample_type)
+    import time
+    now = time.time()
+    print("Result is", result.text)
+
+    print("=============================================\nTODO! Test Zeek upload with DNS and CONN logs!!!!=============================================")
+
+    print("Testing UUID finder for last private uploaded sample")
+    upload_time = now
+    result = get_uuid_for_uploaded_sample(sample_name, upload_time)
     if result is not None:
         print("Success")
     else:
         print("Failed!")
-    '''
-    '''
-    public_uuid = "NzhmZjIxMWMtMjZjNi00OGZjLTgwM2UtYzNmZWM3MmNjOTU0I2hhc2gjMDBkYzM5N2MzZjg1NDcyYjljN2Y0MjAzYzQwOGU0ZmI="
+    if result is not None:
+        private_uuid = result
+    else:
+        private_uuid = None
+    wait_for_sample_processing(private_uuid)
+    print("Sample", private_uuid, "successfully processed!")
+
+    print("Testing UUID finder for last public uploaded sample")
+    result = get_uuid_for_uploaded_sample(sample_name, upload_time, get_public_uuid=True)
+    public_uuid = None
+    if result is not None:
+        print("Success")
+        public_uuid = result
+    else:
+        print("Failed!")
+
+
+    print("Trying to get just secflows from private sample:")
+    result = get_secflows_from_sample(private_uuid)
+    #result = get_secflows_from_sample("00dc397c3f85472b9c7f4203c408e4fb")
+    if result is not None:
+        print("Success")
+    else:
+        print("Failed!")
+
+
     print("Trying to get just secflows from public sample:")
     result = get_secflows_from_sample(public_uuid, is_public=True)
     if result is not None:
@@ -477,8 +542,36 @@ def main():
     else:
         print("Failed!")
     example_secflow = result[1]
+    '''
+
+    print("===================================\nChanging to known public/private secflow IDs for remaining tests.\n===================================")
+    public_uuid = "NzhmZjIxMWMtMjZjNi00OGZjLTgwM2UtYzNmZWM3MmNjOTU0I2hhc2gjMDBkYzM5N2MzZjg1NDcyYjljN2Y0MjAzYzQwOGU0ZmI="
+    private_uuid = "00dc397c3f85472b9c7f4203c408e4fb"
+
+    print("Trying to get just secflows from private sample:")
+    result = get_secflows_from_sample(private_uuid)
+    if result is not None:
+        print("Success")
+    else:
+        print("Failed!")
+
+
+    print("Trying to get just secflows from public sample:")
+    result = get_secflows_from_sample(public_uuid, is_public=True)
+    if result is not None:
+        print("Success")
+    else:
+        print("Failed!")
+    example_secflow = result[1]
+
     print("Trying to get just count for second secflow from public sample:")
     count = get_global_count_for_secflow(example_secflow, public_uuid, is_public=True)
+    if count != -1:
+        print("Success:", str(count))
+    else:
+        print("Failed!")
+    print("Trying to get just count for second secflow from private sample:")
+    count = get_global_count_for_secflow(example_secflow, private_uuid)
     if count != -1:
         print("Success:", str(count))
     else:
@@ -490,9 +583,23 @@ def main():
         print("Success:", event)
     else:
         print("Failed!")
+    print("Trying to get event metadata for third secflow from private sample:")
+    example_secflow = result[2]
+    event = get_event_for_secflow(example_secflow, private_uuid)
+    if event is not None:
+        print("Success:", event)
+    else:
+        print("Failed!")
     print("Trying to get behavior metadata for thirteenth secflow from public sample:")
     example_secflow = result[12]
     behavior = get_behavior_for_secflow(example_secflow, public_uuid, is_public=True)
+    if behavior is not None:
+        print("Success:", behavior)
+    else:
+        print("Failed!")
+    print("Trying to get behavior metadata for thirteenth secflow from private sample:")
+    example_secflow = result[12]
+    behavior = get_behavior_for_secflow(example_secflow, private_uuid)
     if behavior is not None:
         print("Success:", behavior)
     else:
@@ -504,12 +611,23 @@ def main():
         print("Success:", dest)
     else:
         print("Failed!")
+    print("Trying to get destination metadata for fourteenth secflow from private sample:")
+    example_secflow = result[13]
+    dest = get_destination_for_secflow(example_secflow, private_uuid)
+    if dest is not None:
+        print("Success:", dest)
+    else:
+        print("Failed!")
     print("Trying to get aggregated metadata for public sample:")
     agg = get_aggregated_data_for_sample(public_uuid, is_public=True)
     if agg is not None:
         print("Success. Found", str(len(agg)), "activities!")
     else:
         print("Failed!")
-    '''
-
+    print("Trying to get aggregated metadata for private sample:")
+    agg = get_aggregated_data_for_sample(private_uuid)
+    if agg is not None:
+        print("Success. Found", str(len(agg)), "activities!")
+    else:
+        print("Failed!")
 main()

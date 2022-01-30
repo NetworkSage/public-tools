@@ -1,0 +1,10 @@
+#separator \x09
+#set_separator	,
+#empty_field	(empty)
+#unset_field	-
+#path	dns
+#open	2021-12-22-15-10-47
+#fields	ts	uid	id.orig_h	id.orig_p	id.resp_h	id.resp_p	proto	trans_id	rtt	query	qclass	qclass_name	qtype	qtype_name	rcode	rcode_name	AA	TC	RD	RA	Z	answers	TTLs	rejected
+#types	time	string	addr	port	addr	port	enum	count	interval	string	count	string	count	string	count	string	bool	bool	bool	bool	count	vector[string]	vector[interval]	bool
+1640200844.639986	CXZde73iuzWmzYekoa	10.100.200.196	55153	10.100.200.1	53	udp	50541	-	www.yahoo.com	-	-	-	-	0	NOERROR	F	F	F	T	0	new-fp-shed.wg1.b.yahoo.com,74.6.231.20,74.6.143.26,74.6.143.25,74.6.231.21	24.000000,15.000000,15.000000,15.000000,15.000000	F
+#close	2021-12-22-15-10-47

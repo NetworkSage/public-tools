@@ -1,92 +1,161 @@
-# public-tools
+# networksage-api-wrappers
+This repository contains wrappers and other helper functions for the current version of public APIs available to users of NetworkSage. To request an API key, please register for an account at https://networksage.seclarity.io/register.
 
+## What is NetworkSage?
 
+The NetworkSage platform, first and foremost, acts as a lightweight, privacy-maintaining enrichment layer for your network traffic. It takes network flows (which we call *Secflows*), categorizes them with one of a couple dozen labels (see our [Glossary](https://www.seclarity.io/resources/glossary/) for details), and compares them with the global dataset of known activity. For every Secflow, it returns:
+  * how common it is globally
+  * which categorization it has
+  * any metadata the security community has provided
 
-## Getting started
+To visually illustrate, refer to the following (taken from a public [sample](https://networksage.seclarity.io/public/samples/NzhmZjIxMWMtMjZjNi00OGZjLTgwM2UtYzNmZWM3MmNjOTU0I2hhc2gjYjZhMzQ4MTk0NTU5NDFiNWE1MGYzMzM4Nzc5N2YwZDY=) we found while creating our first [Threat Report](https://www.seclarity.io/resources/blog/the-art-of-perswaysion-phishing-kit/)).
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+When this sample was uploaded to NetworkSage, all Secflows were automatically categorized and their global commonality was identified:
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+![Alt text](images/flow_cat_commonality.png?raw=true "Flow Categories and Commonality")
 
-## Add your files
+In addition, many of those **Destinations** (an IP or Domain name plus its port) had additional metadata provided by the security community. That information was made available inline:
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+![Alt text](images/destinations_metadata.png?raw=true "Destinations with Metadata")
+
+Some of the categories associated with certain Secflows also indicated specific **Behavior** was happening. That information (also provided by the community) was shared for more in-depth knowledge:
+
+![Alt text](images/behaviors_metadata.png?raw=true "Behaviors with Metadata")
+
+Finally, some of the Behaviors (when seen in a particular order within some period of time) actually identified more complex interactions that we call **Events**:
+
+![Alt text](images/events_metadata.png?raw=true "Events with Metadata")
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.com/seclarityIO/public-tools.git
-git branch -M main
-git push -uf origin main
+With the release of our public APIs, this information (and more!) is now available directly via API call.
 ```
 
-## Integrate with your tools
+## Available APIs
 
-- [ ] [Set up project integrations](https://gitlab.com/seclarityIO/public-tools/-/settings/integrations)
+Regardless whether or not you use this package, the following APIs are available to users:
 
-## Collaborate with your team
+#### 1. Sample Upload
+**Endpoint URL:** `https://api.seclarity.io/upload/v1.0/uploader`
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Automatically merge when pipeline succeeds](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+Takes one of our [supported file formats](#supported-file-formats), uploads it to NetworkSage (to your private view, if you are a paying customer), and converts it into our Secflow format.
 
-## Test and Deploy
+**Relevant Wrapper:** `upload_sample`
 
-Use the built-in continuous integration in GitLab.
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+#### 2. List of Uploaded Samples
+**Endpoint URL:** `https://api.seclarity.io/upload/v1.0/uploads/list`
 
-***
+Lists information about all files you have uploaded.
 
-# Editing this README
+**Relevant Wrapper:** `list_my_samples`
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!).  Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
 
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+#### 3. Get Sample Metadata for Private Sample
+**Endpoint URL:** `https://api.seclarity.io/sec/v1.0/samples/<sample_uuid>`
 
-## Name
-Choose a self-explaining name for your project.
+Lists high-level metadata about a particular sample. It does not provide the enriched data.
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+**Relevant Wrapper:** `get_private_sample_metadata`
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+#### 4. Get Secflows for Private Sample
+**Endpoint URL:** `https://api.seclarity.io/sec/v1.0/samples/<sample_uuid>/list`
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+Returns all Secflows from the sample identified via UUID.
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+**Relevant Wrapper:** `get_secflows_from_sample`
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+#### 5. Get Secflows for Public Sample
+**Endpoint URL:** `get_secflows_from_sample`
+`https://ns-genericservice.app.seclarity.io/public/secflows/v1/<sample_public_uuid>/list/aggregated`
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+Returns all Secflows from the sample identified via a public UUID. A public UUID will be generated for any samples uploaded that are not set to private. Note that this endpoint also provides an aggregated view of **all** sample contents, not just Secflows.
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+**Relevant Wrapper:** `get_secflows_from_sample`
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+#### 6. Get Global Count for Secflow
+**Endpoint URL:** `https://api.seclarity.io/sec/v1.0/secflows/<flowid>/count`
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+Returns the number of global samples a given Secflow has been observed in. This can be easily used to understand how common some kind of activity to a particular Destination is globally.
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+**Relevant Wrapper:** `get_global_count_for_secflow`
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+#### 7. Get Metadata about a Destination
+**Endpoint URL:** `https://api.seclarity.io/sec/v1.0/destinations/<destination_name_:port>`
 
-## License
-For open source projects, say how it is licensed.
+Returns any metadata we know for the particular Destination. This can include:
+* Title
+* Description
+* Relevance
+* Tags
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+The list above will likely expand over time. For additional details about what each type of metadata above means, please refer to our [glossary](https://www.seclarity.io/resources/glossary/).
+
+**Use Cases:**
+- [ ] Has anyone seen a site I've seen?
+- [ ] Does the community know that a site is **not interesting**? **known malicious**?
+- [ ] What category is this Destination associated with?
+
+**Relevant Wrapper:** `get_destination_for_secflow`
+
+#### 8. Get Metadata about a Behavior
+**Endpoint URL:** `https://api.seclarity.io/sec/v1.0/behaviors/<flowid>`
+
+Returns any metadata we know for this particular flow category to this Destination. Included metadata:
+* Title
+* Description
+* Relevance
+* Tags
+
+**Use Cases:**
+- [ ] Has someone tagged this with an `Impact` tag of `CredentialsEntered`?
+- [ ] Is this Behavior to this site indicative of a domain being parked?
+- [ ] Is this Behavior known to be a Microsoft portal loading?
+
+**Relevant Wrapper:** `get_behavior_for_secflow`
+
+#### 9. Get Metadata about an Event
+**Endpoint URL:** `https://api.seclarity.io/sec/v1.0/events/<eventid>`
+
+Returns any metadata we know for this particular Event (made up of two or more Behaviors). Included metadata:
+* Title
+* Description
+* Relevance
+* Tags
+
+**Use Cases:**
+- [ ] Is this Event known to be associated with a link click on a URL Shortener?
+- [ ] Has someone tagged this with a `Threat` tag of `Phishing`?
+- [ ] Is this Event indicative of a domain being parked?
+
+**Relevant Wrapper:** `get_event_for_secflow`
+
+## Other Useful Information
+### Helper Functions
+This repository contains several helper functions to make it easier to perform common actions with the system more easily.
+
+1. `get_aggregated_data_for_sample`
+Because the API endpoints for public and private samples return data differently, this function wraps them to return data identically.
+
+2. `get_uuid_for_uploaded_sample`
+Everything related to a particular sample requires the sample's UUID. Samples that are public have both a public and a private UUID, while those that are private have only the latter. This wrapper makes it easy to get back the UUID you need.
+
+3. `wait_for_sample_processing`
+A sample will generally take somewhere between 30 and 90 seconds to be processed by the system (depending on load, size of sample, etc...). Because the APIs that work with a sample's data require the sample to be processed, this function polls the system to identify when the data is ready.
+
+
+### Supported File Formats
+
+NetworkSage currently supports uploading the following files (which will be converted into our Secflow format):
+- [ ] PCAP
+- [ ] PCAPNG
+- [ ] Zeek (conn.log and dns.log)
+- [ ] Secflow
+
+If you have a format that you'd like us to support, please review our [FAQs](https://www.seclarity.io/resources/faqs/) and contact `support at seclarity [.] io`.
+
+### Getting Involved
+We have **a lot** of plans to change the face of security. If you want to be involved as a contributor or to be a part of the community we're building, we highly encourage you to join our [Slack](https://join.slack.com/t/networksage/shared_invite/zt-yr8qv3xe-eqc8vEui9q0GV_LWH8vw6w)!
+
+
+### License
+This software is provided under the Apache Software License. See the accompanying LICENSE file for more information.

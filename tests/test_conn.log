@@ -1,0 +1,14 @@
+#separator \x09
+#set_separator	,
+#empty_field	(empty)
+#unset_field	-
+#path	conn
+#open	2021-12-22-15-10-47
+#fields	ts	uid	id.orig_h	id.orig_p	id.resp_h	id.resp_p	proto	service	duration	orig_bytes	resp_bytes	conn_state	local_orig	local_resp	missed_bytes	history	orig_pkts	orig_ip_bytes	resp_pkts	resp_ip_bytes	tunnel_parents
+#types	time	string	addr	port	addr	port	enum	string	interval	count	count	string	bool	bool	count	string	count	count	count	count	set[string]
+1640200844.639986	CXZde73iuzWmzYekoa	10.100.200.196	55153	10.100.200.1	53	udp	dns	-	-	-	SHR	-	-	0	^d	0	0	1	155	-
+1640200835.869056	CIySKWkxQ3itAqyCf	10.100.200.110	58623	10.100.200.196	3389	tcp	-	16.091771	52636	0	OTH	-	-	0	DA	1690	120236	0	0	-
+1640200847.818433	COR3areKJVv4vIC17	10.100.200.196	53419	52.226.139.185	443	tcp	-	-	-	-	OTH	-	-	0	^d	0	0	1	213	-
+1640200844.692446	Cyv9P31fI9EhrHRISc	74.6.231.20	0	10.100.200.196	8	icmp	-	3.016738	128	0	OTH	-	-	0	-	4	240	0	0	-
+1640200854.192446	Czv9a31fI9uhr4RIS8	92.3.221.42	0	10.100.200.196	8	icmp	-	8.015733	28	0	OTH	-	-	0	-	4	50	0	0	-
+#close	2021-12-22-15-10-47
