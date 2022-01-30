@@ -65,8 +65,7 @@ Returns all Secflows from the sample identified via UUID.
 **Relevant Wrapper:** `get_secflows_from_sample`
 
 #### 5. Get Secflows for Public Sample
-**Endpoint URL:** `get_secflows_from_sample`
-`https://ns-genericservice.app.seclarity.io/public/secflows/v1/<sample_public_uuid>/list/aggregated`
+**Endpoint URL:** `https://ns-genericservice.app.seclarity.io/public/secflows/v1/<sample_public_uuid>/list/aggregated`
 
 Returns all Secflows from the sample identified via a public UUID. A public UUID will be generated for any samples uploaded that are not set to private. Note that this endpoint also provides an aggregated view of **all** sample contents, not just Secflows.
 
