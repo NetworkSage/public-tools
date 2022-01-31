@@ -13,6 +13,8 @@ import threading
 import os
 from datetime import datetime
 import time
+import base64
+from tests import tests
 
 my_api_key_var = "NETWORKSAGE_API_KEY"
 api_key = os.environ.get(my_api_key_var)
@@ -99,7 +101,7 @@ def list_my_samples():
     return list_of_samples
 
 
-def get_uuid_for_uploaded_sample(sample_name, upload_time, get_public_uuid=False):
+def get_uuid_for_uploaded_sample(sample_name, upload_time_utc, get_public_uuid=False):
     """Wraps a couple of APIs to help a user find a sample that has been
         uploaded at a (roughly) known time. Expects the upload_time to be in epoch time as an integer.
     """
@@ -112,27 +114,33 @@ def get_uuid_for_uploaded_sample(sample_name, upload_time, get_public_uuid=False
     time_format = "%Y-%m-%dT%H:%M:%S.%f"
     for file_info in files_list:
         try:
-            if file_info["fileName"] == sample_name and file_info["processed"] == "false":
+            if file_info["fileName"] == sample_name:
                 # grab exact time this file was uploaded from file path
-                sample_uploaded_time_str = (file_info["fullS3FilePath"].split("date=")[1]).split("/")[0]
-                sample_uploaded_time = int(
-                    datetime.timestamp(                 datetime.strptime(sample_uploaded_time_str
+                sample_uploaded_time_utc_str = (file_info["fullS3FilePath"].split("date=")[1]).split("/")[0]
+                sample_uploaded_time_utc = int(
+                    datetime.timestamp(datetime.strptime(sample_uploaded_time_utc_str
                                     , time_format
                                     )
                                 )
                             )
-                if abs(sample_uploaded_time - upload_time) < 120:
+                if abs(sample_uploaded_time_utc - upload_time_utc) < 60:
                     uuid = file_info["uuid"]
                     if not get_public_uuid:
                         break
                     else:
                         sample_metadata = get_private_sample_metadata(uuid)
                         if sample_metadata is not None:
-                            try:
-                                link = sample_metadata["link"]
-                                uuid = link[link.rfind("/"):]
-                            except:
-                                uuid = None
+                            while True:
+                                if "id" in sample_metadata.keys() and "hash" in sample_metadata.keys():
+                                    str_bytes = (sample_metadata["id"]
+                                                + "#hash#"
+                                                + sample_metadata["hash"]
+                                                ).encode("ascii")
+
+                                    uuid = base64.b64encode(str_bytes).decode("ascii")
+                                    break
+                                else:
+                                    time.sleep(5.0) # check every 5 seconds to see if it's done processing
                         else:
                             print("Couldn't find requested sample's public uuid!")
                             uuid = None
@@ -465,169 +473,6 @@ def retrieve_via_session(**kwargs):
         print("Unrecognized metadata type", metadata_type+". Exiting!")
         sys.exit(1)
 
-
-def main():
+if __name__ == "__main__":
     # Do some tests
-
-    print("Testing List:")
-    res = list_my_samples()
-    print("Found", str(len(res)), "samples")
-
-    '''
-    print("Testing Secflow upload")
-    sample_name = "tests/secflow_test.sf"
-    with open(sample_name, 'rb') as indata:
-        sample_data = indata.read()
-    sample_type = "secflow"
-    result = upload_sample(sample_name, sample_data, sample_type)
-    print("Result is", result.text)
-
-    print("Testing PCAP upload")
-    sample_name = "tests/pcap_test.pcap"
-    with open(sample_name, 'rb') as indata:
-        sample_data = indata.read()
-    sample_type = "pcap"
-    result = upload_sample(sample_name, sample_data, sample_type)
-    print("Result is", result.text)
-
-    print("Testing Zeek upload without DNS log")
-    sample_name = "tests/test_conn.log"
-    with open(sample_name, 'rb') as indata:
-        sample_data = indata.read()
-    sample_type = "zeek"
-    result = upload_sample(sample_name, sample_data, sample_type)
-    import time
-    now = time.time()
-    print("Result is", result.text)
-
-    print("=============================================\nTODO! Test Zeek upload with DNS and CONN logs!!!!=============================================")
-
-    print("Testing UUID finder for last private uploaded sample")
-    upload_time = now
-    result = get_uuid_for_uploaded_sample(sample_name, upload_time)
-    if result is not None:
-        print("Success")
-    else:
-        print("Failed!")
-    if result is not None:
-        private_uuid = result
-    else:
-        private_uuid = None
-    wait_for_sample_processing(private_uuid)
-    print("Sample", private_uuid, "successfully processed!")
-
-    print("Testing UUID finder for last public uploaded sample")
-    result = get_uuid_for_uploaded_sample(sample_name, upload_time, get_public_uuid=True)
-    public_uuid = None
-    if result is not None:
-        print("Success")
-        public_uuid = result
-    else:
-        print("Failed!")
-
-
-    print("Trying to get just secflows from private sample:")
-    result = get_secflows_from_sample(private_uuid)
-    #result = get_secflows_from_sample("00dc397c3f85472b9c7f4203c408e4fb")
-    if result is not None:
-        print("Success")
-    else:
-        print("Failed!")
-
-
-    print("Trying to get just secflows from public sample:")
-    result = get_secflows_from_sample(public_uuid, is_public=True)
-    if result is not None:
-        print("Success:", result)
-    else:
-        print("Failed!")
-    example_secflow = result[1]
-    '''
-
-    print("===================================\nChanging to known public/private secflow IDs for remaining tests.\n===================================")
-    public_uuid = "NzhmZjIxMWMtMjZjNi00OGZjLTgwM2UtYzNmZWM3MmNjOTU0I2hhc2gjMDBkYzM5N2MzZjg1NDcyYjljN2Y0MjAzYzQwOGU0ZmI="
-    private_uuid = "00dc397c3f85472b9c7f4203c408e4fb"
-
-    print("Trying to get just secflows from private sample:")
-    result = get_secflows_from_sample(private_uuid)
-    if result is not None:
-        print("Success")
-    else:
-        print("Failed!")
-
-
-    print("Trying to get just secflows from public sample:")
-    result = get_secflows_from_sample(public_uuid, is_public=True)
-    if result is not None:
-        print("Success")
-    else:
-        print("Failed!")
-    example_secflow = result[1]
-
-    print("Trying to get just count for second secflow from public sample:")
-    count = get_global_count_for_secflow(example_secflow, public_uuid, is_public=True)
-    if count != -1:
-        print("Success:", str(count))
-    else:
-        print("Failed!")
-    print("Trying to get just count for second secflow from private sample:")
-    count = get_global_count_for_secflow(example_secflow, private_uuid)
-    if count != -1:
-        print("Success:", str(count))
-    else:
-        print("Failed!")
-    print("Trying to get event metadata for third secflow from public sample:")
-    example_secflow = result[2]
-    event = get_event_for_secflow(example_secflow, public_uuid, is_public=True)
-    if event is not None:
-        print("Success:", event)
-    else:
-        print("Failed!")
-    print("Trying to get event metadata for third secflow from private sample:")
-    example_secflow = result[2]
-    event = get_event_for_secflow(example_secflow, private_uuid)
-    if event is not None:
-        print("Success:", event)
-    else:
-        print("Failed!")
-    print("Trying to get behavior metadata for thirteenth secflow from public sample:")
-    example_secflow = result[12]
-    behavior = get_behavior_for_secflow(example_secflow, public_uuid, is_public=True)
-    if behavior is not None:
-        print("Success:", behavior)
-    else:
-        print("Failed!")
-    print("Trying to get behavior metadata for thirteenth secflow from private sample:")
-    example_secflow = result[12]
-    behavior = get_behavior_for_secflow(example_secflow, private_uuid)
-    if behavior is not None:
-        print("Success:", behavior)
-    else:
-        print("Failed!")
-    print("Trying to get destination metadata for fourteenth secflow from public sample:")
-    example_secflow = result[13]
-    dest = get_destination_for_secflow(example_secflow, public_uuid, is_public=True)
-    if dest is not None:
-        print("Success:", dest)
-    else:
-        print("Failed!")
-    print("Trying to get destination metadata for fourteenth secflow from private sample:")
-    example_secflow = result[13]
-    dest = get_destination_for_secflow(example_secflow, private_uuid)
-    if dest is not None:
-        print("Success:", dest)
-    else:
-        print("Failed!")
-    print("Trying to get aggregated metadata for public sample:")
-    agg = get_aggregated_data_for_sample(public_uuid, is_public=True)
-    if agg is not None:
-        print("Success. Found", str(len(agg)), "activities!")
-    else:
-        print("Failed!")
-    print("Trying to get aggregated metadata for private sample:")
-    agg = get_aggregated_data_for_sample(private_uuid)
-    if agg is not None:
-        print("Success. Found", str(len(agg)), "activities!")
-    else:
-        print("Failed!")
-main()
+    tests.run_tests(api_key)
