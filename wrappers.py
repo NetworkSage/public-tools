@@ -12,6 +12,7 @@ import requests
 import json
 import threading
 import os
+import sys
 import time
 import base64
 from datetime import datetime
@@ -22,6 +23,7 @@ my_api_key_var = "NETWORKSAGE_API_KEY"
 api_key = os.environ.get(my_api_key_var)
 if api_key is None:
     print("Missing API Key. Please type export NETWORKSAGE_API_KEY='<your_api_key>' in your terminal to set up.")
+    sys.exit(1)
 
 
 def had_error(response):

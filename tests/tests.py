@@ -1,13 +1,13 @@
 import time
 import pathlib
 from datetime import datetime
-import api_wrappers as wrapper
+import wrappers as wrapper
 
 def run_tests(api_key):
     print("Testing List:")
     res = wrapper.list_my_samples()
     print("Found", str(len(res)), "samples")
-    '''
+
     print("Testing Secflow upload")
     sample_name = "secflow_test.sf"
     sample_location = pathlib.PurePath("tests", sample_name)
@@ -92,11 +92,13 @@ def run_tests(api_key):
     else:
         print("Result is short. Can't continue tests.")
         return
-    '''
+
     print("===================================\nChanging to known public/private secflow IDs for remaining tests.\n===================================")
     public_uuid = "NzhmZjIxMWMtMjZjNi00OGZjLTgwM2UtYzNmZWM3MmNjOTU0I2hhc2gjMDBkYzM5N2MzZjg1NDcyYjljN2Y0MjAzYzQwOGU0ZmI="
     private_uuid = "00dc397c3f85472b9c7f4203c408e4fb"
-    '''
+    print("Note that any of the private UUID calls will fail unless you are the owner.")
+    time.sleep(2)
+
     print("Trying to get just Secflows from private sample:")
     result = wrapper.get_secflows_from_sample(private_uuid)
     if result is not None:
@@ -166,7 +168,6 @@ def run_tests(api_key):
         print("Success:", dest)
     else:
         print("Failed!")
-    '''
     print("Trying to get aggregated metadata for public sample:")
     agg = wrapper.get_aggregated_data_for_sample(public_uuid, is_public=True)
     if agg is not None:
