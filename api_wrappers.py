@@ -12,9 +12,10 @@ import requests
 import json
 import threading
 import os
-from datetime import datetime
 import time
 import base64
+from datetime import datetime
+import concurrent.futures
 from tests import tests
 
 my_api_key_var = "NETWORKSAGE_API_KEY"
@@ -416,45 +417,35 @@ def get_aggregated_data_for_sample(uuid, is_public=False):
                                 , "event": {}
                                 , "flowIdCount": 1 # default value that should ALWAYS be overwritten
                                 }]
-        count_collection_thread = threading.Thread(target=retrieve_via_session
-                                    , kwargs={
-                                            "activities":aggregated_activity
-                                            , "metadata_type": "count"
-                                            }
-                                    )
-        dest_collection_thread = threading.Thread(target=retrieve_via_session
-                                    , kwargs={
-                                            "activities": aggregated_activity
-                                            , "metadata_type": "destination"
-                                            }
-                                    )
-        behavior_collection_thread = threading.Thread(target=retrieve_via_session
-                                    , kwargs={
-                                            "activities": aggregated_activity
-                                            , "metadata_type": "behavior"
-                                            }
-                                    )
-        event_collection_thread = threading.Thread(target=retrieve_via_session
-                                    , kwargs={
-                                            "activities": aggregated_activity
-                                            , "metadata_type": "event"
-                                            }
-                                    )
-        dest_collection_thread.start()
-        count_collection_thread.start()
-        event_collection_thread.start()
-        time.sleep(2) # poor man's race condition breaking for now
-        behavior_collection_thread.start()
-        behavior_collection_thread.join()
+        calls = [{
+                       "activities": aggregated_activity
+                       , "metadata_type": "count"
+                        }
+                ,{
+                       "activities": aggregated_activity
+                       , "metadata_type": "destination"
+                        }
+                ,{
+                       "activities": aggregated_activity
+                       , "metadata_type": "behavior"
+                       }
+                ,{
+                       "activities": aggregated_activity
+                       , "metadata_type": "event"
+                       }
+                ]
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+            for call_args in calls:
+                executor.submit(retrieve_via_session, call_args)
     return aggregated_activity
 
 
-def retrieve_via_session(**kwargs):
+def retrieve_via_session(call_args):
     """Helper that uses sessions (instead of individual requests per item) to
         collect many of the same items in a row. Helps to reduce overhead.
     """
-    activities = kwargs["activities"]
-    metadata_type = kwargs["metadata_type"]
+    activities = call_args["activities"]
+    metadata_type = call_args["metadata_type"]
 
     session = requests.Session()
     if metadata_type == "count":

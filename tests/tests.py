@@ -25,7 +25,7 @@ def run_tests(api_key):
     sample_type = "pcap"
     result = wrapper.upload_sample(sample_name, sample_data, sample_type)
     print("Result is", result.text)
-    '''
+
     print("Testing Zeek upload without DNS log")
     sample_name = "test_conn.log"
     sample_location = pathlib.PurePath("tests", sample_name)
@@ -34,7 +34,7 @@ def run_tests(api_key):
     sample_type = "zeek"
     result = wrapper.upload_sample(sample_name, sample_data, sample_type)
     print("Result is", result.text)
-        
+
     print("Testing Zeek upload with DNS log")
     sample_name = "test_conn.log"
     dnslog_name = "test_dns.log"
@@ -92,11 +92,11 @@ def run_tests(api_key):
     else:
         print("Result is short. Can't continue tests.")
         return
-
+    '''
     print("===================================\nChanging to known public/private secflow IDs for remaining tests.\n===================================")
     public_uuid = "NzhmZjIxMWMtMjZjNi00OGZjLTgwM2UtYzNmZWM3MmNjOTU0I2hhc2gjMDBkYzM5N2MzZjg1NDcyYjljN2Y0MjAzYzQwOGU0ZmI="
     private_uuid = "00dc397c3f85472b9c7f4203c408e4fb"
-
+    '''
     print("Trying to get just Secflows from private sample:")
     result = wrapper.get_secflows_from_sample(private_uuid)
     if result is not None:
@@ -166,6 +166,7 @@ def run_tests(api_key):
         print("Success:", dest)
     else:
         print("Failed!")
+    '''
     print("Trying to get aggregated metadata for public sample:")
     agg = wrapper.get_aggregated_data_for_sample(public_uuid, is_public=True)
     if agg is not None:
