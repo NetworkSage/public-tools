@@ -1,7 +1,8 @@
 """
     Copyright (c) 2022 David Pearson (david@seclarity.io)
     Date: 01/30/2022
-    This file contains wrappers and other helper functions for the current version of public APIs available to users of NetworkSage. To request an API key, please register for an account at https://networksage.seclarity.io/register.
+    This file contains wrappers and other helper functions for the current version of public APIs available to users of
+    NetworkSage. To request an API key, please register for an account at https://networksage.seclarity.io/register.
 
     This software is provided under the Apache Software License.
     See the accompanying LICENSE file for more information.
@@ -36,27 +37,39 @@ def had_error(response):
     return False
 
 
-def upload_sample(sample_name, sample_data, sample_type):
+def upload_sample(sample_name, sample_data, sample_type, dns_data=None):
     """Upload a sample to the NetworkSage platform.
-
         + sample_name: whatever you want the sample to be named in the platform
                         (for your own reference and/or public reference, depending on privacy settings).
         + sample_data: data for the sample in binary format (such as through
                         opening in "rb" mode and reading into this variable).
-        + sample_type: one of the accepted upload types (pcap, pcapng, etc...)
+        + sample_type: one of the accepted upload types (pcap, pcapng, zeek, secflow, currently)
+        + dns_data: an optional field (currently valid for Zeek only) that allows DNS information to be passed along.
 
-        Return data will contain status codes (result.status_code), and JSON-encoded information (in result.text) containing:
+        Return data will contain status codes (result.status_code), and JSON-encoded information (in result.text)
+        containing:
             + error: Boolean identifying if there was an error
             + body: a message about acceptance of the sample
     """
 
     upload_url = "https://api.seclarity.io/upload/v1.0/uploader"
 
-    files = { "file": (sample_name
-                        , sample_data
-                        , "application/octet-stream"
-                        )
-            }
+    if dns_data is not None and sample_type == "zeek":
+        files = { "file": (sample_name
+                            , sample_data
+                            , "application/octet-stream"
+                            )
+                , "zeekDnsFile": ("dns_" + sample_name
+                                    , dns_data
+                                    , "application/octet-stream"
+                                    )
+                }
+    else:
+        files = { "file": (sample_name
+                            , sample_data
+                            , "application/octet-stream"
+                            )
+                }
     request_headers = { "apikey": api_key }
 
     request_data = { "type": sample_type
@@ -72,8 +85,8 @@ def upload_sample(sample_name, sample_data, sample_type):
 
 def list_my_samples():
     """High-level information about each of the samples that you have uploaded.
-
-        Return data will contain status codes (result.status_code), and JSON-encoded information (in result.text) containing:
+        Return data will contain status codes (result.status_code), and JSON-encoded information (in result.text)
+        containing:
             + error: Boolean identifying if there was an error
             + body: a list of samples identifying (among other info):
                     + filename: name of file provided to NetworkSage
@@ -83,7 +96,8 @@ def list_my_samples():
                     + dateCreated: string (in DD/MM/YYYY HH:MM:SS format)
                                 identifying when the sample was created in the system (a.k.a. uploaded)
                     + dateProcessed: string (in "YYYY-MM-DDTHH:MM:SS.mmmmmm"
-                                format) identifying when the file has been successfully processed. This will not exist if processed is False
+                                format) identifying when the file has been successfully processed. This will not exist
+                                if processed is False
                     + fileType: string identifying what type of file it is
                                 (i.e. pcap)
                     + uuid: string uniquely identifying this sample in
@@ -159,8 +173,10 @@ def get_private_sample_metadata(uuid):
         + fileName: string produced by NetworkSage. Will not be the same as the
                     name provided in the front-end.
         + trafficDate: string version of the epoch time (floating-point) that
-                    corresponds to when the traffic was actually captured (if your sample is from 2 weeks ago, this will identify that time).
-        When the trafficDate value is populated, that means that the sample was successfully processed. Otherwise that value will be empty.
+                    corresponds to when the traffic was actually captured (if your sample is from 2 weeks ago, this will
+                    identify that time).
+        When the trafficDate value is populated, that means that the sample was successfully processed. Otherwise that
+        value will be empty.
     """
     sample_id = uuid
 
@@ -186,14 +202,13 @@ def is_sample_processed(uuid):
 
 
 def wait_for_sample_processing(uuid):
-    """Wrapper to poll until sample has been processed. When this returns, the
-        sample will be ready.
+    """Wrapper to poll until sample has been processed. When this returns, the sample will be ready.
     """
     sample_checking_timer = threading.Event()
     while not sample_checking_timer.wait(15.0): # check every 15 seconds
         if is_sample_processed(uuid):
             sample_checking_timer.set()
-            break # superfluous?
+            break
 
 
 def get_public_sample_data(uuid, metadata_type=None, individual_flow_id=None):
@@ -216,7 +231,7 @@ def get_public_sample_data(uuid, metadata_type=None, individual_flow_id=None):
                 return activity[metadata_type]
             else:
                 continue
-        metadata += [activity[metadata_type]] # needs to be prettier and handle errors!
+        metadata += [activity[metadata_type]]
     return metadata
 
 
@@ -227,7 +242,8 @@ def get_secflows_from_sample(uuid, is_public=False):
         + destinationData: destination name (or IP, if no name known) with port
                         number appended
         + destinationNameSource: how the destinationData field was populated
-                            (cache [from a cache maintained by NetworkSage], passive [from this sample], active [from a reverse lookup], or original [name provided or no name known])
+                            (cache [from a cache maintained by NetworkSage], passive [from this sample], active [from a
+                            reverse lookup], or original [name provided or no name known])
         + destinationPackets: number of packets seen from the destination
         + duration: number of seconds (string representation of a float) this
                     secflow was active
@@ -262,7 +278,8 @@ def get_secflows_from_sample(uuid, is_public=False):
 
 def get_global_count_for_secflow(secflow, uuid=None, is_public=False, session=None):
     """Returns the number of global samples a given Secflow has been observed
-        in. If for some reason there is no response, returns -1. Session variable can be passed in if many counts are being requested simultaneously (to reduce overhead).
+        in. If for some reason there is no response, returns -1. Session variable can be passed in if many counts are
+        being requested simultaneously (to reduce overhead).
     """
     count = -1
     flowid = secflow["flowId"]
@@ -288,7 +305,8 @@ def get_global_count_for_secflow(secflow, uuid=None, is_public=False, session=No
 
 def get_destination_for_secflow(secflow, uuid=None, is_public=False, session=None):
     """Returns a Destination (see https://www.seclarity.io/resources/glossary/
-        for details) for a given Secflow. If no Destination exists, returns None. Session variable can be passed in if many Destinations are being requested simultaneously (to reduce overhead).
+        for details) for a given Secflow. If no Destination exists, returns None. Session variable can be passed in if
+        many Destinations are being requested simultaneously (to reduce overhead).
     """
     destination = None
     name = secflow["destinationData"]
@@ -318,7 +336,8 @@ def get_destination_for_secflow(secflow, uuid=None, is_public=False, session=Non
 
 def get_behavior_for_secflow(secflow, uuid=None, is_public=False, session=None):
     """Returns a Behavior (see https://www.seclarity.io/resources/glossary/ for
-        details) for a given Secflow. If no Behavior exists, returns None. Session variable can be passed in if many Behaviors are being requested simultaneously (to reduce overhead).
+        details) for a given Secflow. If no Behavior exists, returns None. Session variable can be passed in if many
+        Behaviors are being requested simultaneously (to reduce overhead).
     """
     behavior = None
     flowid = secflow["flowId"]
@@ -346,7 +365,8 @@ def get_behavior_for_secflow(secflow, uuid=None, is_public=False, session=None):
 
 def get_event_for_secflow(secflow, uuid=None, is_public=False, session=None):
     """Returns an Event (see https://www.seclarity.io/resources/glossary/ for
-        details) that includes a given Secflow. If no Event exists, returns None. Session variable can be passed in if many Events are being requested simultaneously (to reduce overhead).
+        details) that includes a given Secflow. If no Event exists, returns None. Session variable can be passed in if
+        many Events are being requested simultaneously (to reduce overhead).
     """
     event = None
     if "eventId" not in secflow:
@@ -377,7 +397,8 @@ def get_event_for_secflow(secflow, uuid=None, is_public=False, session=None):
 
 def get_aggregated_data_for_sample(uuid, is_public=False):
     """Wrapper that returns an aggregated view of all of the Secflows, Counts,
-        Destinations, Behaviors, and Events for a given sample. These will be ordered by relativeStart time with respect to the sample.
+        Destinations, Behaviors, and Events for a given sample. These will be ordered by relativeStart time with respect
+        to the sample.
     """
     aggregated_activity = []
     if is_public:
@@ -429,9 +450,9 @@ def get_aggregated_data_for_sample(uuid, is_public=False):
 
 
 def retrieve_via_session(**kwargs):
-    '''Helper that uses sessions (instead of individual requests per item) to
+    """Helper that uses sessions (instead of individual requests per item) to
         collect many of the same items in a row. Helps to reduce overhead.
-    '''
+    """
     activities = kwargs["activities"]
     metadata_type = kwargs["metadata_type"]
 

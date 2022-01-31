@@ -7,7 +7,7 @@ def run_tests(api_key):
     print("Testing List:")
     res = wrapper.list_my_samples()
     print("Found", str(len(res)), "samples")
-
+    '''
     print("Testing Secflow upload")
     sample_name = "secflow_test.sf"
     sample_location = pathlib.PurePath("tests", sample_name)
@@ -16,7 +16,7 @@ def run_tests(api_key):
     sample_type = "secflow"
     result = wrapper.upload_sample(sample_name, sample_data, sample_type)
     print("Result is", result.text)
-    '''
+
     print("Testing PCAP upload")
     sample_name = "pcap_test.pcap"
     sample_location = pathlib.PurePath("tests", sample_name)
@@ -25,7 +25,7 @@ def run_tests(api_key):
     sample_type = "pcap"
     result = wrapper.upload_sample(sample_name, sample_data, sample_type)
     print("Result is", result.text)
-    
+    '''
     print("Testing Zeek upload without DNS log")
     sample_name = "test_conn.log"
     sample_location = pathlib.PurePath("tests", sample_name)
@@ -33,12 +33,23 @@ def run_tests(api_key):
         sample_data = indata.read()
     sample_type = "zeek"
     result = wrapper.upload_sample(sample_name, sample_data, sample_type)
-    '''
-    now = time.time()
-    now_utc = datetime.timestamp(datetime.utcfromtimestamp(now))
+    print("Result is", result.text)
+        
+    print("Testing Zeek upload with DNS log")
+    sample_name = "test_conn.log"
+    dnslog_name = "test_dns.log"
+    dnslog_location = pathlib.PurePath("tests", dnslog_name)
+    sample_location = pathlib.PurePath("tests", sample_name)
+    with open(sample_location, 'rb') as indata:
+        sample_data = indata.read()
+    with open(dnslog_location, 'rb') as dns_indata:
+        dns_data = dns_indata.read()
+    sample_type = "zeek"
+    result = wrapper.upload_sample(sample_name, sample_data, sample_type, dns_data=dns_data)
     print("Result is", result.text)
 
-    print("=============================================\nTODO! Test Zeek upload with DNS and CONN logs!!!!=============================================")
+    now = time.time()
+    now_utc = datetime.timestamp(datetime.utcfromtimestamp(now))
 
     print("Testing UUID finder for last private uploaded sample")
     upload_time = now_utc
