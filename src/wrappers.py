@@ -17,7 +17,7 @@ import time
 import base64
 from datetime import datetime
 import concurrent.futures
-from tests import tests
+import tests
 
 my_api_key_var = "NETWORKSAGE_API_KEY"
 api_key = os.environ.get(my_api_key_var)
@@ -29,7 +29,6 @@ if api_key is None:
 def had_error(response):
     """Quick error handling function to avoid code repetition.
     """
-
     if response.status_code != requests.codes.ok:
         print("Error:", response.text)
         return True
