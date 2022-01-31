@@ -1,4 +1,4 @@
-# networksage-api-wrappers
+# networksage_wrappers
 This repository contains wrappers and other helper functions for the current version of public APIs available to users of NetworkSage. To request an API key, please register for an account at https://networksage.seclarity.io/register.
 
 ## What is NetworkSage?
