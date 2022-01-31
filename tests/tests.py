@@ -1,3 +1,12 @@
+"""
+    Copyright (c) 2022 David Pearson (david@seclarity.io)
+    Date: 01/31/2022
+    This file contains wrappers and helper functions for various NetworkSage APIs.
+
+    This software is provided under the Apache Software License.
+    See the accompanying LICENSE file for more information.
+"""
+
 import time
 import pathlib
 from datetime import datetime
