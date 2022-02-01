@@ -10,7 +10,7 @@
 import time
 import pathlib
 from datetime import datetime
-import wrappers as wrapper
+from wrappers import wrappers as wrapper
 
 def run_tests(api_key):
     print("Testing List:")

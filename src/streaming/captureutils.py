@@ -15,14 +15,14 @@ import os
 import sys
 import magic
 import pcapy
-from filelock import SoftFileLock, Timeout
-import packet
-import iputils
-import dnsservice
 import time
 import threading
 from collections import deque
-import wrappers as networksage
+from filelock import SoftFileLock, Timeout
+from streaming import packet
+from streaming import iputils
+from streaming import dnsservice
+from wrappers import wrappers as networksage
 
 my_api_key_var = "NETWORKSAGE_API_KEY"
 api_key = os.environ.get(my_api_key_var)

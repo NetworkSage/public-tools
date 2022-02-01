@@ -9,14 +9,14 @@
     See the accompanying LICENSE file for more information.
 """
 
-import ipaddress
 import re
 import socket
-from pathlib import Path
 import pickle
-import iputils
-import packet
-import utilities
+import ipaddress
+from pathlib import Path
+from streaming import iputils
+from streaming import packet
+from streaming import utilities
 
 class DnsService:
     def __init__(self, utils):

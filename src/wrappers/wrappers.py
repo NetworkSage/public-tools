@@ -17,7 +17,7 @@ import time
 import base64
 from datetime import datetime
 import concurrent.futures
-import tests
+from wrappers import tests
 
 my_api_key_var = "NETWORKSAGE_API_KEY"
 api_key = os.environ.get(my_api_key_var)
