@@ -12,19 +12,19 @@ To visually illustrate, refer to the following (taken from a public [sample](htt
 
 When this sample was uploaded to NetworkSage, all Secflows were automatically categorized and their global commonality was identified:
 
-![Flow Categories and Commonality](https://gitlab.com/networksage-public-tools/networksage-wrappers/-/raw/main/images/flow_cat_commonality.png?raw=true)
+![Flow Categories and Commonality](https://gitlab.com/networksage-public-tools/networksage/-/raw/main/images/flow_cat_commonality.png?raw=true)
 
 In addition, many of those **Destinations** (an IP or Domain name plus its port) had additional metadata provided by the security community. That information was made available inline:
 
-![Destinations with Metadata](https://gitlab.com/networksage-public-tools/networksage-wrappers/-/raw/main/images/destinations_metadata.png?raw=true)
+![Destinations with Metadata](https://gitlab.com/networksage-public-tools/networksage/-/raw/main/images/destinations_metadata.png?raw=true)
 
 Some of the categories associated with certain Secflows also indicated specific **Behavior** was happening. That information (also provided by the community) was shared for more in-depth knowledge:
 
-![Behaviors with Metadata](https://gitlab.com/networksage-public-tools/networksage-wrappers/-/raw/main/images/behaviors_metadata.png?raw=true)
+![Behaviors with Metadata](https://gitlab.com/networksage-public-tools/networksage/-/raw/main/images/behaviors_metadata.png?raw=true)
 
 Finally, some of the Behaviors (when seen in a particular order within some period of time) actually identified more complex interactions that we call **Events**:
 
-![Events with Metadata](https://gitlab.com/networksage-public-tools/networksage-wrappers/-/raw/main/images/events_metadata.png?raw=true)
+![Events with Metadata](https://gitlab.com/networksage-public-tools/networksage/-/raw/main/images/events_metadata.png?raw=true)
 
 ## Available Modules
 
@@ -94,9 +94,9 @@ Returns any metadata we know for the particular Destination. This can include:
 The list above will likely expand over time. For additional details about what each type of metadata above means, please refer to our [glossary](https://www.seclarity.io/resources/glossary/).
 
 **Use Cases:**
-- [ ] Has anyone seen a site I've seen?
-- [ ] Does the community know that a site is **not interesting**? **known malicious**?
-- [ ] What category is this Destination associated with?
+- Has anyone seen a site I've seen?
+- Does the community know that a site is **not interesting**? **known malicious**?
+- What category is this Destination associated with?
 
 **Relevant Wrapper:** `get_destination_for_secflow`
 
@@ -110,9 +110,9 @@ Returns any metadata we know for this particular flow category to this Destinati
 * Tags
 
 **Use Cases:**
-- [ ] Has someone tagged this with an `Impact` tag of `CredentialsEntered`?
-- [ ] Is this Behavior to this site indicative of a domain being parked?
-- [ ] Is this Behavior known to be a Microsoft portal loading?
+- Has someone tagged this with an `Impact` tag of `CredentialsEntered`?
+- Is this Behavior to this site indicative of a domain being parked?
+- Is this Behavior known to be a Microsoft portal loading?
 
 **Relevant Wrapper:** `get_behavior_for_secflow`
 
@@ -126,9 +126,9 @@ Returns any metadata we know for this particular Event (made up of two or more B
 * Tags
 
 **Use Cases:**
-[ ] Is this Event known to be associated with a link click on a URL Shortener?
-[ ] Has someone tagged this with a `Threat` tag of `Phishing`?
-[ ] Is this Event indicative of a domain being parked?
+- Is this Event known to be associated with a link click on a URL Shortener?
+- Has someone tagged this with a `Threat` tag of `Phishing`?
+- Is this Event indicative of a domain being parked?
 
 **Relevant Wrapper:** `get_event_for_secflow`
 

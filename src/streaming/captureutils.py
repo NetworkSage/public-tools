@@ -22,7 +22,7 @@ import dnsservice
 import time
 import threading
 from collections import deque
-import networksage_wrappers as networksage
+import wrappers as networksage
 
 my_api_key_var = "NETWORKSAGE_API_KEY"
 api_key = os.environ.get(my_api_key_var)
