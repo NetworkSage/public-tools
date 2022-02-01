@@ -12,19 +12,19 @@ To visually illustrate, refer to the following (taken from a public [sample](htt
 
 When this sample was uploaded to NetworkSage, all Secflows were automatically categorized and their global commonality was identified:
 
-![Alt text](images/flow_cat_commonality.png?raw=true "Flow Categories and Commonality")
+![Flow Categories and Commonality](https://gitlab.com/networksage-public-tools/networksage-wrappers/-/raw/main/images/flow_cat_commonality.png?raw=true)
 
 In addition, many of those **Destinations** (an IP or Domain name plus its port) had additional metadata provided by the security community. That information was made available inline:
 
-![Alt text](images/destinations_metadata.png?raw=true "Destinations with Metadata")
+![Destinations with Metadata](https://gitlab.com/networksage-public-tools/networksage-wrappers/-/raw/main/images/destinations_metadata.png?raw=true)
 
 Some of the categories associated with certain Secflows also indicated specific **Behavior** was happening. That information (also provided by the community) was shared for more in-depth knowledge:
 
-![Alt text](images/behaviors_metadata.png?raw=true "Behaviors with Metadata")
+![Behaviors with Metadata](https://gitlab.com/networksage-public-tools/networksage-wrappers/-/raw/main/images/behaviors_metadata.png?raw=true)
 
 Finally, some of the Behaviors (when seen in a particular order within some period of time) actually identified more complex interactions that we call **Events**:
 
-![Alt text](images/events_metadata.png?raw=true "Events with Metadata")
+![Events with Metadata](https://gitlab.com/networksage-public-tools/networksage-wrappers/-/raw/main/images/events_metadata.png?raw=true)
 
 ```
 With the release of our public APIs, this information (and more!) is now available directly via API call.
