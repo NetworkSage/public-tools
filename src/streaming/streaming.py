@@ -67,8 +67,8 @@ def start(interface, duration=300):
         (in seconds) to capture before uploading to NetworkSage. This function will run until killed, continually
         generating and uploading samples.
     """
-    platform = platform.system().lower()
-    if platform in ["linux", "darwin"]:
+    my_platform = platform.system().lower()
+    if my_platform in ["linux", "darwin"]:
         os.nice(20) # Linux-specific, values are [-20,20] (higher being "nicer" to other processes)
     else:
         print("Need to implement resource limiting on Windows and other non-Linux systems (if it's too resource-intensive)!")
