@@ -211,5 +211,5 @@ def send_sample(**kwargs):
         with open(utils.json_output_filepath, 'rb') as indata:
             sample_data = indata.read()
         sample_type = "secflow"
-        networksage.upload_sample(sample_name, sample_data, sample_type)
+        networksage.upload_sample(utils.sample_name, sample_data, sample_type)
     utils.cleanup_files()

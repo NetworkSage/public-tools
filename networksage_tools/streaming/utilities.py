@@ -33,6 +33,7 @@ class Utilities():
         self.file_start_time = float(99999999999)  # set it impossibly high at beginning
         self.secflows_filepath = ""  # file to temporarily store just the secflows with proper formatting. Needed in order to have a consistent file to hash
         self.json_output_filepath = ""  # file to store the final output intended to be sent back to the caller
+        self.sample_name = ""
         self.secflows_hash = ""  # used to store the hash of the secflows file
         self.zeekflows = collections.OrderedDict()
         self.packet_buffer = collections.deque() #create an empty buffer to store packets that have not yet been processed
@@ -139,6 +140,7 @@ class Utilities():
         self.secflows = {k: v for k, v in sorted(self.secflows.items(), key=lambda item: item[1].relative_start_time)}
 
         with open(self.json_output_filepath, "w") as json_outfile:
+            self.sample_name = os.path.basename(self.json_output_filepath)
             rows = []
             for flow in self.secflows.keys():
                 if self.secflows[flow].protocol_information in ["ICMP"]:
@@ -164,7 +166,7 @@ class Utilities():
                               "duration": self.secflows[flow].duration}]
             # metadata for the file that is important to keep track of
             json_output = {"hash": self.secflows_hash, "trafficDate": str(self.file_start_time),
-                          "fileName": os.path.basename(self.json_output_filepath),
+                          "fileName": self.sample_name,
                           "flashes": rows}  # note: can rename flashes to secflows
             json.dump(json_output, json_outfile)
 
