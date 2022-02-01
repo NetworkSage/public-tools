@@ -72,6 +72,9 @@ def start(interface, duration=300):
         os.nice(20) # Linux-specific, values are [-20,20] (higher being "nicer" to other processes)
     else:
         print("Need to implement resource limiting on Windows and other non-Linux systems (if it's too resource-intensive)!")
+    api_key = os.environ.get("NETWORKSAGE_API_KEY")
+    if api_key is None:
+        print("Missing API Key. Please type export NETWORKSAGE_API_KEY='<your_api_key>' in your terminal to set up.")
 
     cleanup_thread = threading.Thread(target=schedule_cleanup, kwargs={"interval":60}) # clean up every minute
     cleanup_thread.start()

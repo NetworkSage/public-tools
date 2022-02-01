@@ -205,9 +205,9 @@ def send_sample(**kwargs):
 
     #print("Conversion complete! Final JSON Output stored at", utils.json_output_filepath)
     if api_key is None:
-        print("Would be ready to send", str(len(utils.secflows)), "secflows out to NetworkSage")
+        print("Would be ready to send", str(len(utils.secflows)), "secflows out to NetworkSage, but no API key present.")
     else:
-        print("Uploading sample to NetworkSage!")
+        #print("Uploading sample to NetworkSage!")
         with open(utils.json_output_filepath, 'rb') as indata:
             sample_data = indata.read()
         sample_type = "secflow"

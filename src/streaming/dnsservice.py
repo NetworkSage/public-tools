@@ -124,7 +124,7 @@ class DnsService:
                                                                 )
                                                         ))
                     except:
-                        print("Some error with", str(pkt[answers_start
+                        print("Some non-fatal error with", str(pkt[answers_start
                                                         + num_bytes_into_answers + 10
                                                         : answers_start
                                                         + num_bytes_into_answers + 14]

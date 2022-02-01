@@ -19,7 +19,7 @@ class Utilities():
     local_ips_reverse_regex = r"([0-9]{1,3})\.([0-9]{1,3})\.((1[6-9]\.172)|(2[0-9]\.172)|(3[0-1]\.172)|([0-9]{1,3}\.10)|(168\.192))\.in\-addr\.arpa\.$"
     ipv6_regex = r"(([1-9a-fA-F]{1,}:)"  # very basic, meant to filter out virtually anything right now. Also not currently used
 
-    def __init__(self, orig_fp, platform):
+    def __init__(self, orig_fp, platform_type):
         self.active_external_ips = set()
         self.questions = dict()
         self.original_filepath = orig_fp
@@ -27,7 +27,7 @@ class Utilities():
             self.is_streaming = True
         else:
             self.is_streaming = False
-        self.system_type = platform
+        self.system_type = platform_type
         self.filtered_filepath = ""
         self.secflows = collections.OrderedDict()  # dict of Secflow objects (TCP, UDP, or ICMP)
         self.file_start_time = float(99999999999)  # set it impossibly high at beginning
