@@ -62,29 +62,11 @@ def schedule_cleanup(**kwargs):
     s.run()
 
 
-if __name__ == "__main__":
-
-    # handle all arguments
-    parser = argparse.ArgumentParser()
-    streaming_group = parser.add_argument_group("Streaming Arguments", "arguments available when configuring streaming")
-    streaming_group.add_argument("-i", "--interface", help="the name of the interface to capture network data from", type=str)
-    streaming_group.add_argument("-d", "--duration", help="(optional) how long (in seconds) to capture before creating a new sample (default is 300 seconds)", type=int)
-    authentication_group = parser.add_argument_group("Authentication Info", "arguments available for providing authentication information")
-    authentication_group.add_argument("--key", help="a valid API key to enable upload to the NetworkSage platform")
-
-    args = parser.parse_args()
-
-    if not args.interface:
-        print("Error: Must specify an interface to capture on. Exiting!")
-        sys.exit(1)
-    if not args.duration:
-        args.duration = 300
-    if args.duration < 10:
-        args.duration = 60
-        print("Too low of a duration set. Setting duration to 60 seconds")
-    if not args.key:
-        print("No authentication information, so we won't try to upload")
-
+def start(interface, duration=300):
+    """Start the streaming functionality. Expects the name of the interface to capture network data from, and a duration
+        (in seconds) to capture before uploading to NetworkSage. This function will run until killed, continually
+        generating and uploading samples.
+    """
     platform = platform.system().lower()
     if platform in ["linux", "darwin"]:
         os.nice(20) # Linux-specific, values are [-20,20] (higher being "nicer" to other processes)
@@ -99,7 +81,7 @@ if __name__ == "__main__":
         #set up threading
         utils = utilities.Utilities(None, platform)  # create an instance of utils to use
         capture_thread = threading.Thread(target=captureutils.capture
-                                        , kwargs={"interface": args.interface
+                                        , kwargs={"interface": interface
                                                 , "bpf": captureutils.create_bpf()
                                                 , "utils": utils
                                                 }
@@ -107,7 +89,7 @@ if __name__ == "__main__":
         processing_thread = threading.Thread(target=captureutils.process_packets
                                             , kwargs={"utils":utils}
                                             )
-        iteration_timer = threading.Timer(args.duration
+        iteration_timer = threading.Timer(duration
                                         , captureutils.send_sample
                                         , kwargs={"utils":utils
                                                 , "capture_thread":capture_thread
@@ -115,10 +97,29 @@ if __name__ == "__main__":
                                                 , "key":None
                                                 }
                                         )
-        print("Capturing on", args.interface, "for", str(args.duration), "seconds")
+        print("Capturing on", interface, "for", str(duration), "seconds")
 
         # Start processing the packets we're collecting in our utilities packet buffer
         iteration_timer.start()
         capture_thread.start()
         processing_thread.start()
-        time.sleep(args.duration - ((time.time() - start_time) % args.duration))
+        time.sleep(duration - ((time.time() - start_time) % duration))
+
+if __name__ == "__main__":
+
+    # handle all arguments
+    parser = argparse.ArgumentParser()
+    streaming_group = parser.add_argument_group("Streaming Arguments", "arguments available when configuring streaming")
+    streaming_group.add_argument("-i", "--interface", help="the name of the interface to capture network data from", type=str)
+    streaming_group.add_argument("-d", "--duration", help="(optional) how long (in seconds) to capture before creating a new sample (default is 300 seconds)", type=int)
+
+    args = parser.parse_args()
+    if not args.interface:
+        print("Error: Must specify an interface to capture on. Exiting!")
+        sys.exit(1)
+    if not args.duration:
+        args.duration = 300
+    if args.duration < 10:
+        args.duration = 60
+        print("Too low of a duration set. Setting duration to 60 seconds")
+    start(args.interface, args.duration)
