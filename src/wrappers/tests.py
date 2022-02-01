@@ -19,7 +19,7 @@ def run_tests(api_key):
 
     print("Testing Secflow upload")
     sample_name = "secflow_test.sf"
-    sample_location = pathlib.PurePath("..", "tests", sample_name)
+    sample_location = pathlib.PurePath("tests", sample_name)
     with open(sample_location, 'rb') as indata:
         sample_data = indata.read()
     sample_type = "secflow"
@@ -28,7 +28,7 @@ def run_tests(api_key):
 
     print("Testing PCAP upload")
     sample_name = "pcap_test.pcap"
-    sample_location = pathlib.PurePath("..", "tests", sample_name)
+    sample_location = pathlib.PurePath("tests", sample_name)
     with open(sample_location, 'rb') as indata:
         sample_data = indata.read()
     sample_type = "pcap"
@@ -37,7 +37,7 @@ def run_tests(api_key):
 
     print("Testing Zeek upload without DNS log")
     sample_name = "test_conn.log"
-    sample_location = pathlib.PurePath("..", "tests", sample_name)
+    sample_location = pathlib.PurePath("tests", sample_name)
     with open(sample_location, 'rb') as indata:
         sample_data = indata.read()
     sample_type = "zeek"
@@ -47,8 +47,8 @@ def run_tests(api_key):
     print("Testing Zeek upload with DNS log")
     sample_name = "test_conn.log"
     dnslog_name = "test_dns.log"
-    dnslog_location = pathlib.PurePath("..", "tests", dnslog_name)
-    sample_location = pathlib.PurePath("..", "tests", sample_name)
+    dnslog_location = pathlib.PurePath("tests", dnslog_name)
+    sample_location = pathlib.PurePath("tests", sample_name)
     with open(sample_location, 'rb') as indata:
         sample_data = indata.read()
     with open(dnslog_location, 'rb') as dns_indata:

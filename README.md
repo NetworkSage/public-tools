@@ -1,5 +1,5 @@
-# networksage_wrappers
-This repository contains wrappers and other helper functions for the current version of public APIs available to users of NetworkSage. To request an API key, please register for an account at https://networksage.seclarity.io/register.
+# networksage
+This repository contains publicly-released tools that will be helpful when interacting with the NetworkSage platform. Note that all functionality inside will require either a free or paid API key. To request an API key, please register for an account at https://networksage.seclarity.io/register.
 
 ## What is NetworkSage?
 
@@ -26,15 +26,19 @@ Finally, some of the Behaviors (when seen in a particular order within some peri
 
 ![Events with Metadata](https://gitlab.com/networksage-public-tools/networksage-wrappers/-/raw/main/images/events_metadata.png?raw=true)
 
-```
-With the release of our public APIs, this information (and more!) is now available directly via API call.
-```
+## Available Modules
 
-## Available APIs
+There are multiple modules available within this package. Details about each are below.
+
+### 1. API Wrappers
+**module name:** `wrappers`
+With the release of our public APIs, all of the information available in the UI (and more!) is now available directly via API call.
+
+#### Available APIs
 
 Regardless whether or not you use this package, the following APIs are available to users:
 
-#### 1. Sample Upload
+##### 1. Sample Upload
 **Endpoint URL:** `https://api.seclarity.io/upload/v1.0/uploader`
 
 Takes one of our [supported file formats](#supported-file-formats), uploads it to NetworkSage (to your private view, if you are a paying customer), and converts it into our Secflow format.
@@ -42,7 +46,7 @@ Takes one of our [supported file formats](#supported-file-formats), uploads it t
 **Relevant Wrapper:** `upload_sample`
 
 
-#### 2. List of Uploaded Samples
+##### 2. List of Uploaded Samples
 **Endpoint URL:** `https://api.seclarity.io/upload/v1.0/uploads/list`
 
 Lists information about all files you have uploaded.
@@ -50,35 +54,35 @@ Lists information about all files you have uploaded.
 **Relevant Wrapper:** `list_my_samples`
 
 
-#### 3. Get Sample Metadata for Private Sample
+##### 3. Get Sample Metadata for Private Sample
 **Endpoint URL:** `https://api.seclarity.io/sec/v1.0/samples/<sample_uuid>`
 
 Lists high-level metadata about a particular sample. It does not provide the enriched data.
 
 **Relevant Wrapper:** `get_private_sample_metadata`
 
-#### 4. Get Secflows for Private Sample
+##### 4. Get Secflows for Private Sample
 **Endpoint URL:** `https://api.seclarity.io/sec/v1.0/samples/<sample_uuid>/list`
 
 Returns all Secflows from the sample identified via UUID.
 
 **Relevant Wrapper:** `get_secflows_from_sample`
 
-#### 5. Get Secflows for Public Sample
+##### 5. Get Secflows for Public Sample
 **Endpoint URL:** `https://ns-genericservice.app.seclarity.io/public/secflows/v1/<sample_public_uuid>/list/aggregated`
 
 Returns all Secflows from the sample identified via a public UUID. A public UUID will be generated for any samples uploaded that are not set to private. Note that this endpoint also provides an aggregated view of **all** sample contents, not just Secflows.
 
 **Relevant Wrapper:** `get_secflows_from_sample`
 
-#### 6. Get Global Count for Secflow
+##### 6. Get Global Count for Secflow
 **Endpoint URL:** `https://api.seclarity.io/sec/v1.0/secflows/<flowid>/count`
 
 Returns the number of global samples a given Secflow has been observed in. This can be easily used to understand how common some kind of activity to a particular Destination is globally.
 
 **Relevant Wrapper:** `get_global_count_for_secflow`
 
-#### 7. Get Metadata about a Destination
+##### 7. Get Metadata about a Destination
 **Endpoint URL:** `https://api.seclarity.io/sec/v1.0/destinations/<destination_name:port>`
 
 Returns any metadata we know for the particular Destination. This can include:
@@ -96,7 +100,7 @@ The list above will likely expand over time. For additional details about what e
 
 **Relevant Wrapper:** `get_destination_for_secflow`
 
-#### 8. Get Metadata about a Behavior
+##### 8. Get Metadata about a Behavior
 **Endpoint URL:** `https://api.seclarity.io/sec/v1.0/behaviors/<flowid>`
 
 Returns any metadata we know for this particular flow category to this Destination. Included metadata:
@@ -112,7 +116,7 @@ Returns any metadata we know for this particular flow category to this Destinati
 
 **Relevant Wrapper:** `get_behavior_for_secflow`
 
-#### 9. Get Metadata about an Event
+##### 9. Get Metadata about an Event
 **Endpoint URL:** `https://api.seclarity.io/sec/v1.0/events/<eventid>`
 
 Returns any metadata we know for this particular Event (made up of two or more Behaviors). Included metadata:
@@ -122,11 +126,28 @@ Returns any metadata we know for this particular Event (made up of two or more B
 * Tags
 
 **Use Cases:**
-- [ ] Is this Event known to be associated with a link click on a URL Shortener?
-- [ ] Has someone tagged this with a `Threat` tag of `Phishing`?
-- [ ] Is this Event indicative of a domain being parked?
+[ ] Is this Event known to be associated with a link click on a URL Shortener?
+[ ] Has someone tagged this with a `Threat` tag of `Phishing`?
+[ ] Is this Event indicative of a domain being parked?
 
 **Relevant Wrapper:** `get_event_for_secflow`
+
+### 2. Streaming Secflow Collector
+**module name:** `streaming`
+
+This module allows you to directly capture network traffic as unenriched Secflows (Secflows without flow category labels). This is beneficial for a number of reasons:
+
+* Secflows are *extremely* lightweight, so you can actually do this continuously in the background without affecting system performance (i.e. you can collect network telemetry continuously on your endpoints)!
+* Secflows have no identifying data, so you can avoid worrying about accidentally leaking information (URIs, passwords, keys, etc...)
+
+#### Usage
+
+To capture Secflows continuously using this package, run the following as root (you'll need to be root to capture packets):
+
+```
+python3 streaming.py -i <interface_name> -d <duration_in_seconds>
+```
+
 
 ## Other Useful Information
 ### Helper Functions
@@ -142,10 +163,10 @@ This repository contains several helper functions to make it easier to perform c
 ### Supported File Formats
 
 NetworkSage currently supports uploading the following files (which will be converted into our Secflow format):
-- [ ] PCAP
-- [ ] PCAPNG
-- [ ] Zeek (conn.log and dns.log)
-- [ ] Secflow
+[ ] PCAP
+[ ] PCAPNG
+[ ] Zeek (conn.log and dns.log)
+[ ] Secflow
 
 If you have a format that you'd like us to support, please review our [FAQs](https://www.seclarity.io/resources/faqs/) and contact `support at seclarity [.] io`.
 
