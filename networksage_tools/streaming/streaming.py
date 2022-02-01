@@ -82,7 +82,7 @@ def start(interface, duration=300):
     start_time = time.time()
     while True:
         #set up threading
-        utils = utilities.Utilities(None, platform)  # create an instance of utils to use
+        utils = utilities.Utilities(None, my_platform)  # create an instance of utils to use
         capture_thread = threading.Thread(target=captureutils.capture
                                         , kwargs={"interface": interface
                                                 , "bpf": captureutils.create_bpf()
