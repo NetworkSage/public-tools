@@ -8,24 +8,23 @@
 """
 
 import time
-from pathlib import Path
-import requests
+import pathlib
 from datetime import datetime
+import importlib.resources
 from networksage_tools.wrappers import wrappers as wrapper
 
 def run_tests(api_key):
+    test_dir = None
+    with importlib.resources.path(__package__, "tests") as p:
+        test_dir = p
     print("Testing List:")
     res = wrapper.list_my_samples()
     print("Found", str(len(res)), "samples")
-    secflow_sample_name = Path("secflow_test.sf")
-    if not secflow_sample_name.is_file():
-        print("Fetching secflow sample file for test.")
-        requests.get()
-        with open(self.long_term_passive_dns_file_name, "w") as pdns_file:
-            print("Created file now.") # just create the file
+
     print("Testing Secflow upload")
+    print("File should be within", test_dir)
     sample_name = "secflow_test.sf"
-    sample_location = pathlib.PurePath("tests", sample_name)
+    sample_location = pathlib.PurePath(test_dir, sample_name)
     with open(sample_location, 'rb') as indata:
         sample_data = indata.read()
     sample_type = "secflow"
@@ -34,7 +33,7 @@ def run_tests(api_key):
 
     print("Testing PCAP upload")
     sample_name = "pcap_test.pcap"
-    sample_location = pathlib.PurePath("tests", sample_name)
+    sample_location = pathlib.PurePath(test_dir, sample_name)
     with open(sample_location, 'rb') as indata:
         sample_data = indata.read()
     sample_type = "pcap"
@@ -43,7 +42,7 @@ def run_tests(api_key):
 
     print("Testing Zeek upload without DNS log")
     sample_name = "test_conn.log"
-    sample_location = pathlib.PurePath("tests", sample_name)
+    sample_location = pathlib.PurePath(test_dir, sample_name)
     with open(sample_location, 'rb') as indata:
         sample_data = indata.read()
     sample_type = "zeek"
@@ -53,8 +52,8 @@ def run_tests(api_key):
     print("Testing Zeek upload with DNS log")
     sample_name = "test_conn.log"
     dnslog_name = "test_dns.log"
-    dnslog_location = pathlib.PurePath("tests", dnslog_name)
-    sample_location = pathlib.PurePath("tests", sample_name)
+    dnslog_location = pathlib.PurePath(test_dir, dnslog_name)
+    sample_location = pathlib.PurePath(test_dir, sample_name)
     with open(sample_location, 'rb') as indata:
         sample_data = indata.read()
     with open(dnslog_location, 'rb') as dns_indata:
