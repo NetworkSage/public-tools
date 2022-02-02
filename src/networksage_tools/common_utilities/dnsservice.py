@@ -30,7 +30,7 @@ class DnsService:
         self.short_term_passive_dns_filename = ""
         self.dns_logfile_path = None
         if utils is None:  # shouldn't happen
-            self.utils = utilities.Utilities("")
+            self.utils = utilities.Utilities("", "")
         else:
             self.utils = utils
 
@@ -51,6 +51,85 @@ class DnsService:
                 tmp_set.add(name)
             if len(tmp_set) == 1:
                 self.unique_passive_dns_names[entry] = tmp_set.pop()  # grab the only name
+
+    def parse_dns_records_from_dns_log(self):
+        """Takes a Zeek dns.log, then creates and returns a dictionary of lists of tuples of packet source ports (for
+           later filtering of local lookups), start times (for use later in figuring out which DNS name to use)
+           and A or PTR record DNS resolutions found in the file. The resolutions are stored by name as follows:
+              self.questions["someDomain.tld."]=[(someSrcPort, someTimestamp, "7.8.9.10"),(someSrcPort, someTimestamp, "1.2.3.4")]
+              self.questions["4.3.2.1.in-addr.arpa."]=[(someSrcPort, someTimestamp, "someOtherDomain.tld.")]
+           TODO: Handle PTR records for Zeek!
+        """
+        with open(self.dns_logfile_path, "r") as dns_logfile:
+            for line in dns_logfile:
+                if line.startswith("#"):  # ignore comment lines
+                    continue
+                dns_record = line.strip().split("\t")
+                start_time = float(dns_record[0])
+                roundtrip_time = dns_record[8]
+                source_port = dns_record[3]
+                q_name = dns_record[9] + "."  # we expect FQDNs in our files at this point
+                q_class = dns_record[10]
+                q_type = dns_record[12]
+                rcode_name = dns_record[15]
+                answers = dns_record[21]
+                internet_a_record = False
+                other_unknown_collectible_record = False
+                if q_class == "1" and q_type == "1": # we only want successful DNS lookups to the Internet for A records.
+                    internet_a_record = True
+                elif roundtrip_time == "-" and rcode_name == "NOERROR": # these seem to occur when converting from PCAP to Zeek
+                    other_unknown_collectible_record = True
+                else: # everything else should be thrown away
+                    continue
+
+                if q_name not in self.questions.keys():
+                    self.questions[q_name] = set()
+                if answers.find(",") != -1:  # multiple answers
+                    answers_list = answers.split(",")
+                    for answer in answers_list:
+                        try:
+                            self.questions[q_name].add((source_port, start_time, str(ipaddress.ip_address(answer))))
+                        except:  # it wasn't an IP address, so we'll skip collecting it
+                            #print("Had an error with", answer)
+                            continue
+                else:
+                    self.questions[q_name].add((source_port, start_time, answers))
+
+
+    def parse_dns_records_from_capture_file(self):
+        """Takes a capture file, then creates and returns a dictionary of lists of tuples of packet source ports (for
+           use in filtering later), start times (for use later in figuring out which DNS name to use) and A or PTR
+           record DNS resolutions found in the file. The resolutions are stored by name as follows:
+              self.questions["someDomain.tld."]=[(someSrcPort, someTimestamp, "7.8.9.10"),(someSrcPort, someTimestamp, "1.2.3.4")]
+              self.questions["4.3.2.1.in-addr.arpa."]=[(someSrcPort, someTimestamp, "someOtherDomain.tld.")]
+           The parsing that occurs in this function is correlated with the DNS header, and (I believe) should
+           handle both UDP and TCP DNS queries.
+        """
+        try:
+            import pcapy
+        except ImportError:
+            print("Couldn't import pcapy")
+
+        with pcapy.open_offline(self.utils.original_filepath) as capfile:
+            capfile.setfilter("port domain")
+            (hdr, pkt) = capfile.next()
+            while hdr is not None:
+                # we should only be getting DNS records now, so parse accordingly
+                packet_info = packet.PacketInfo(pkt, hdr, self)  # prep everything for later use
+                try:
+                    is_resp = (pkt[packet_info.upper_layer_start + 2] > 127)  # highest bit would be 1, so must be above 127
+                except:  # packet has no upper layer protocol (such as TCP SYN w/ no data)
+                    hdr, pkt = capfile.next()
+                    continue
+                is_normal_query = (pkt[packet_info.upper_layer_start + 2] ^ 128 < 8)
+                # bits 1-4 (0-based) of byte correspond to normal query (value should be 0)
+                if is_resp and is_normal_query:  # only parse when needed
+                    self.parse_local_lookup_from_packet(packet_info, pkt)
+                else:  # skip query questions and/or non-normal responses
+                    hdr, pkt = capfile.next()
+                    continue
+                hdr, pkt = capfile.next()
+
 
     def parse_local_lookup_from_packet(self, packet_info, pkt):
         txid = str(int.from_bytes(pkt[packet_info.upper_layer_start : packet_info.upper_layer_start + 2], "big"))

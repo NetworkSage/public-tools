@@ -11,6 +11,7 @@
 
 import argparse
 import sys
+import platform
 from pathlib import Path
 from networksage_tools.converter import pcaputils
 from networksage_tools.converter import zeekutils
@@ -51,7 +52,8 @@ def finish_conversion(dns, utils):
 def convert_zeek(zeekfile_location, zeek_dnsfile_location=None):
     """Handles all of the Zeek-specific conversion needs. Takes an optional DNS log.
     """
-    utils = utilities.Utilities(str(zeekfile_location))  # create an instance of utils to use
+    my_platform = platform.system().lower()
+    utils = utilities.Utilities(str(zeekfile_location), my_platform)  # create an instance of utils to use
     dns = dnsservice.DnsService(utils)  # create an instance of the DnsService class to use
 
     if zeek_dnsfile_location is not None:
@@ -72,7 +74,8 @@ def convert_zeek(zeekfile_location, zeek_dnsfile_location=None):
 def convert_pcap(pcapfile_location):
     """Handles all of the PCAP-specific conversion needs. Supports PCAPNG as well.
     """
-    utils = utilities.Utilities(str(pcapfile_location))  # create an instance of utils to use
+    my_platform = platform.system().lower()
+    utils = utilities.Utilities(str(pcapfile_location), my_platform)  # create an instance of utils to use
     dns = dnsservice.DnsService(utils)  # create an instance of the DnsService class to use
 
     # make sure the file is a valid capture file

@@ -47,7 +47,7 @@ class PacketInfo():
             self.transport_layer_length = -1
             self.upper_layer_length = -1
         if utils is None:  # shouldn't happen
-            self.utils = utilities.Utilities("")
+            self.utils = utilities.Utilities("", " ")
         else:
             self.utils = utils
 

@@ -19,7 +19,7 @@ def check_if_local_ip(ip_address):
     ip = ipaddress.ip_address(ip_address)
     return ip.is_private or ip.is_multicast or ip.is_loopback or ip.is_link_local  # we only want to work with globally-routable IPs, essentially
 
-def collect_active_external_ips_from_capturefile(utils):
+def collect_active_external_ips_from_capture_file(utils):
     """We want to know which IP addresses are actually active in a given input file, so we figure that out here. Active
        means that there was actually traffic to/from them, rather than just a DNS lookup that returned that IP
        address.
