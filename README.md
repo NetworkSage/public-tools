@@ -26,13 +26,32 @@ Finally, some of the Behaviors (when seen in a particular order within some peri
 
 ![Events with Metadata](https://gitlab.com/networksage-public-tools/networksage/-/raw/main/images/events_metadata.png?raw=true)
 
+## Installation
+
+Note that this package requires `libpcap-dev` to be installed on your system. Please use your system's package manager (such as `apt` on Ubuntu) to install `libpcap-dev`:
+```
+sudo apt-get install libpcap-dev
+```
+
+To install the `networksage` package, simply type the following:
+```
+pip install networksage
+```
+
+
 ## Available Modules
 
 There are multiple modules available within this package. Details about each are below.
 
-### 1. API Wrappers
+### A. API Wrappers
 **module name:** `wrappers`
+
 With the release of our public APIs, all of the information available in the UI (and more!) is now available directly via API call.
+To import this module into your project, type the following:
+```
+from networksage_tools.wrappers import wrappers
+```
+From there, each of the following APIs can be called via the mentioned wrapper.
 
 #### Available APIs
 
@@ -132,7 +151,7 @@ Returns any metadata we know for this particular Event (made up of two or more B
 
 **Relevant Wrapper:** `get_event_for_secflow`
 
-### 2. Streaming Secflow Collector
+### B. Streaming Secflow Collector
 **module name:** `streaming`
 
 This module allows you to directly capture network traffic as unenriched Secflows (Secflows without flow category labels). This is beneficial for a number of reasons:
@@ -140,13 +159,19 @@ This module allows you to directly capture network traffic as unenriched Secflow
 * Secflows are *extremely* lightweight, so you can actually do this continuously in the background without affecting system performance (i.e. you can collect network telemetry continuously on your endpoints)!
 * Secflows have no identifying data, so you can avoid worrying about accidentally leaking information (URIs, passwords, keys, etc...)
 
+To import this module into your project, type the following:
+```
+from networksage_tools.streaming import streaming
+```
+From there, each of the following APIs can be called via the mentioned wrapper.
 #### Usage
 
-To capture Secflows continuously using this package, run the following as root (you'll need to be root to capture packets):
+To capture Secflows continuously using this module from your project, enter the following (note that you'll need to be root to capture packets):
 
 ```
-python3 streaming.py -i <interface_name> -d <duration_in_seconds>
+streaming.start(<interface_name>, <duration_in_seconds>) 
 ```
+Note that the above will run in perpetuity, capturing packets from the interface you specified (such as "enp0s3" on Ubuntu systems). Every time the specified duration you provided is reached (if you provide no value, it defaults to 300 seconds), a sample will be created and uploaded to your NetworkSage account.
 
 
 ## Other Useful Information
@@ -163,10 +188,11 @@ This repository contains several helper functions to make it easier to perform c
 ### Supported File Formats
 
 NetworkSage currently supports uploading the following files (which will be converted into our Secflow format):
-[ ] PCAP
-[ ] PCAPNG
-[ ] Zeek (conn.log and dns.log)
-[ ] Secflow
+
+* PCAP
+* PCAPNG
+* Zeek (conn.log and dns.log)
+* Secflow
 
 If you have a format that you'd like us to support, please review our [FAQs](https://www.seclarity.io/resources/faqs/) and contact `support at seclarity [.] io`.
 

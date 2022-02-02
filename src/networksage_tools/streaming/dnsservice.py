@@ -14,9 +14,9 @@ import socket
 import pickle
 import ipaddress
 from pathlib import Path
-from streaming import iputils
-from streaming import packet
-from streaming import utilities
+from networksage_tools.streaming import iputils
+from networksage_tools.streaming import packet
+from networksage_tools.streaming import utilities
 
 class DnsService:
     def __init__(self, utils):

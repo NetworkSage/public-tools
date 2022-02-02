@@ -19,10 +19,10 @@ import time
 import threading
 from collections import deque
 from filelock import SoftFileLock, Timeout
-from streaming import packet
-from streaming import iputils
-from streaming import dnsservice
-from wrappers import wrappers as networksage
+from networksage_tools.streaming import packet
+from networksage_tools.streaming import iputils
+from networksage_tools.streaming import dnsservice
+from networksage_tools.wrappers import wrappers as networksage
 
 my_api_key_var = "NETWORKSAGE_API_KEY"
 api_key = os.environ.get(my_api_key_var)

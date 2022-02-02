@@ -8,15 +8,21 @@
 """
 
 import time
-import pathlib
+from pathlib import Path
+import requests
 from datetime import datetime
-from wrappers import wrappers as wrapper
+from networksage_tools.wrappers import wrappers as wrapper
 
 def run_tests(api_key):
     print("Testing List:")
     res = wrapper.list_my_samples()
     print("Found", str(len(res)), "samples")
-
+    secflow_sample_name = Path("secflow_test.sf")
+    if not secflow_sample_name.is_file():
+        print("Fetching secflow sample file for test.")
+        requests.get()
+        with open(self.long_term_passive_dns_file_name, "w") as pdns_file:
+            print("Created file now.") # just create the file
     print("Testing Secflow upload")
     sample_name = "secflow_test.sf"
     sample_location = pathlib.PurePath("tests", sample_name)
