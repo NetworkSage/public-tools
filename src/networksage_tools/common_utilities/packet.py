@@ -9,8 +9,8 @@
 """
 
 import ipaddress
-from networksage_tools.streaming import iputils
-from networksage_tools.streaming import secflow
+from networksage_tools.common_utilities import iputils
+from networksage_tools.common_utilities import secflow
 
 class PacketInfo():
     def __init__(self, pkt, packet_header, utils):

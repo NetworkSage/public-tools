@@ -53,11 +53,12 @@ class Utilities():
             os.remove(self.secflows_filepath)
         except OSError:
             pass
-        # delete the .json temporary file, if it exists
-        try:
-            os.remove(self.json_output_filepath)
-        except OSError:
-            pass
+        if self.is_streaming: # only delete if streaming
+            # delete the .json temporary file, if it exists
+            try:
+                os.remove(self.json_output_filepath)
+            except OSError:
+                pass
 
     def get_timestamp_from_packet_header(self, packet_header):
         """Simple utility to transform packet_header's startTime into a usable float value.
@@ -169,7 +170,6 @@ class Utilities():
                           "fileName": self.sample_name,
                           "flashes": rows}  # note: can rename flashes to secflows
             json.dump(json_output, json_outfile)
-
             return self.json_output_filepath
 
     def check_output_sanity(self):

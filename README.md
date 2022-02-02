@@ -163,7 +163,7 @@ To import this module into your project, type the following:
 ```
 from networksage_tools.streaming import streaming
 ```
-From there, each of the following APIs can be called via the mentioned wrapper.
+
 #### Usage
 
 To capture Secflows continuously using this module from your project, enter the following (note that you'll need to be root to capture packets):
@@ -173,10 +173,35 @@ streaming.start(<interface_name>, <duration_in_seconds>)
 ```
 Note that the above will run in perpetuity, capturing packets from the interface you specified (such as "enp0s3" on Ubuntu systems). Every time the specified duration you provided is reached (if you provide no value, it defaults to 300 seconds), a sample will be created and uploaded to your NetworkSage account.
 
+### C. Standalone Converter
+**module name:** `converter`
+
+This module allows you to convert captured network traffic from any of our supported formats (currently PCAP, PCAPNG, and Zeek) into unenriched Secflows (Secflows without flow category labels). This is useful if you already have network telemetry that you'd like to upload to NetworkSage, but you don't want to upload the original file (for privacy, size, or other reasons).
+
+To import this module into your project, type the following:
+```
+from networksage_tools.converter import converter
+```
+
+#### Usage
+
+To convert a PCAP or PCAPNG file into an unenriched Secflow file, simply enter the following:
+
+```
+converter.convert_pcap(<path_to_pcap_file>) 
+```
+
+To convert a Zeek Conn log into an unenriched Secflow file, simply enter the following:
+
+```
+converter.convert_zeek(<path_to_conn_log>, <optional_path_to_dns_log>) 
+```
+If you have (and would like to include) DNS information that was captured by Zeek, provide the `dns.log` in addition to the `conn.log`. Naming will be much enhanced by doing so.
+
 
 ## Other Useful Information
 ### Helper Functions
-This repository contains several helper functions to make it easier to perform common actions with the platform more easily.
+The `wrappers` module contains several helper functions to make it easier to perform common actions with the platform more easily.
 
 1. `get_aggregated_data_for_sample` wraps the API endpoints for public and private samples to return data identically, since the endpoints provide data differently.
 

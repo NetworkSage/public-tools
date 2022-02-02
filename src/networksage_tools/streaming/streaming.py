@@ -18,9 +18,9 @@ import os
 import platform
 from pathlib import Path
 from filelock import SoftFileLock, Timeout
-from networksage_tools.streaming import dnsservice
-from networksage_tools.streaming import utilities
 from networksage_tools.streaming import captureutils
+from networksage_tools.common_utilities import dnsservice
+from networksage_tools.common_utilities import utilities
 
 def schedule_cleanup(**kwargs):
     s = sched.scheduler(time.time, time.sleep)

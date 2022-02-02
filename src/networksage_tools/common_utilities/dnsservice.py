@@ -14,9 +14,9 @@ import socket
 import pickle
 import ipaddress
 from pathlib import Path
-from networksage_tools.streaming import iputils
-from networksage_tools.streaming import packet
-from networksage_tools.streaming import utilities
+from networksage_tools.common_utilities import iputils
+from networksage_tools.common_utilities import packet
+from networksage_tools.common_utilities import utilities
 
 class DnsService:
     def __init__(self, utils):
@@ -59,7 +59,7 @@ class DnsService:
         null_position = 0
         has_an_a_record = False
         has_ptr_record = False
-        q_name=""
+        q_name = ""
 
         # there can be more than 1 question, so handle them all
         while cnt < num_qs:
@@ -116,13 +116,13 @@ class DnsService:
                     try:
                         if int.from_bytes(pkt[answers_start + num_bytes_into_answers + 8 : answers_start + num_bytes_into_answers + 10]
                                         , "big") == 4: # it's an IPv4 A record
-                            self.questions[q_name].add((packet_info.source_port
+                            self.questions[q_name].add(packet_info.source_port
                                                         , packet_info.packet_start_time
                                                         , str(ipaddress.ip_address(
                                                                 pkt[answers_start + num_bytes_into_answers + 10 : answers_start + num_bytes_into_answers + 14]
                                                                     )
                                                                 )
-                                                        ))
+                                                        )
                     except:
                         print("Some non-fatal error with", str(pkt[answers_start
                                                         + num_bytes_into_answers + 10
@@ -131,7 +131,7 @@ class DnsService:
                                                     ),
                                                  "in", pkt)
                 # calc how far until the next thing we should parse
-                length_to_skip=int.from_bytes(pkt[answers_start + num_bytes_into_answers + 8 : answers_start + num_bytes_into_answers + 10]
+                length_to_skip = int.from_bytes(pkt[answers_start + num_bytes_into_answers + 8 : answers_start + num_bytes_into_answers + 10]
                                             , "big")
                 num_bytes_into_answers += (length_to_skip + 12)
         elif has_ptr_record:
@@ -258,24 +258,27 @@ class DnsService:
             print("Warning:", long_term_pdns_file,
                               "does not exist. Will not use long-term passive DNS for this file.")
         long_term_pdns_dict = dict()
-
         self.short_term_passive_dns_filename = "./shortTermPassiveDNS.pkl"
         try:
             short_term_pdns_file = Path(self.short_term_passive_dns_filename)
-            with open(short_term_pdns_file, "rb") as stpdf:
-                self.short_term_pdns_dict = pickle.load(stpdf)
-            # merge short_term_pdns_file into the passive dns names dict so it can be sorted below:
-            # get an iterator for this dict so we can pull its changes into the current passive dns names dict
-            for entry in self.short_term_pdns_dict.keys():
-                if entry in self.passive_dns_names_dict.keys():
-                    for val in self.short_term_pdns_dict[entry]:
-                        if val not in self.passive_dns_names_dict[entry]:
-                            self.passive_dns_names_dict[entry] += [val]
-                else:
-                    self.passive_dns_names_dict[entry] = self.short_term_pdns_dict[entry]
+            # the above we don't actually use when we're not streaming, but it's easier to instantiate the file and
+            # ignore it than to rewrite the logic a little farther down.
+            if self.utils.is_streaming: # only do this for streaming logic
+                with open(short_term_pdns_file, "rb") as stpdf:
+                    self.short_term_pdns_dict = pickle.load(stpdf)
+                # merge short_term_pdns_file into the passive dns names dict so it can be sorted below:
+                # get an iterator for this dict so we can pull its changes into the current passive dns names dict
+                for entry in self.short_term_pdns_dict.keys():
+                    if entry in self.passive_dns_names_dict.keys():
+                        for val in self.short_term_pdns_dict[entry]:
+                            if val not in self.passive_dns_names_dict[entry]:
+                                self.passive_dns_names_dict[entry] += [val]
+                    else:
+                        self.passive_dns_names_dict[entry] = self.short_term_pdns_dict[entry]
         except:
-            print("Short-term passive DNS file", short_term_pdns_file
-                , "does not exist (or some other error). Will not use short-term knowledge for this iteration.")
+            if self.utils.is_streaming: # only do this for streaming logic
+                print("Short-term passive DNS file", short_term_pdns_file
+                    , "does not exist (or some other error). Will not use short-term knowledge for this iteration.")
 
         self.order_passive_dns_by_timestamp()  # make sure we're sorted by timestamp
 
@@ -287,7 +290,7 @@ class DnsService:
                 # file is lines of "IP DNSname", so store in a dict with IP as key
                 long_term_pdns_dict = dict(line.strip().split(" ") for line in infile)
 
-        entry = None
+        entry = None # entry is only used for streaming logic
         with open(short_term_pdns_file, "wb") as stpdf_handle: # we actually do plan to overwrite it every time so that we can keep updates sanely
             for secflow in self.utils.secflows.keys():
                 named = False  # keep track of whether we've named something each time
@@ -332,22 +335,24 @@ class DnsService:
                     except:  # if not, just keep the IP
                         self.utils.secflows[secflow].dest_name = flow_ip
                         self.utils.secflows[secflow].destination_name_source = "original"
-                if named and entry is not None: # we had picked up our name from current file's passive DNS
-                    # capture the particular entry in the short-term passive DNS file
-                    if flow_ip not in self.short_term_pdns_dict.keys():
-                        """If a name doesn't exist in the current version of the short-term dns names dict, we should
-                           save it so we can write it to the file.
-                        """
-                        self.short_term_pdns_dict[flow_ip] = [(entry[0], entry[1])]
-                    else:
-                        """If a name DOES exist in the current version of the short-term dns names dict (but it doesn't
-                           contain the exact timestamp we currently have), we should UPDATE it so we can write it to
-                           the file.
-                        """
-                        if (entry[0], entry[1]) not in self.short_term_pdns_dict[flow_ip]:
-                            self.short_term_pdns_dict[flow_ip] += [(entry[0], entry[1])]
+                if self.utils.is_streaming: # only do this for streaming logic
+                    if named and entry is not None: # we had picked up our name from current file's passive DNS
+                        # capture the particular entry in the short-term passive DNS file
+                        if flow_ip not in self.short_term_pdns_dict.keys():
+                            """If a name doesn't exist in the current version of the short-term dns names dict, we should
+                               save it so we can write it to the file.
+                            """
+                            self.short_term_pdns_dict[flow_ip] = [(entry[0], entry[1])]
+                        else:
+                            """If a name DOES exist in the current version of the short-term dns names dict (but it doesn't
+                               contain the exact timestamp we currently have), we should UPDATE it so we can write it to
+                               the file.
+                            """
+                            if (entry[0], entry[1]) not in self.short_term_pdns_dict[flow_ip]:
+                                self.short_term_pdns_dict[flow_ip] += [(entry[0], entry[1])]
                 continue
-            pickle.dump(self.short_term_pdns_dict, stpdf_handle) # at the end, (over)write pickle file with our current knowledge
+            if self.utils.is_streaming: # only do this for streaming logic
+                pickle.dump(self.short_term_pdns_dict, stpdf_handle) # at the end, (over)write pickle file with our current knowledge
 
 
     def collect_local_lookups(self):
