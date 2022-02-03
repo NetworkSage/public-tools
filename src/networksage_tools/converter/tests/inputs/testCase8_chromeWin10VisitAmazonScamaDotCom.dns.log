@@ -1,0 +1,40 @@
+#separator \x09
+#set_separator	,
+#empty_field	(empty)
+#unset_field	-
+#path	dns
+#open	2021-06-03-14-08-27
+#fields	ts	uid	id.orig_h	id.orig_p	id.resp_h	id.resp_p	proto	trans_id	rtt	query	qclass	qclass_name	qtype	qtype_name	rcode	rcode_name	AA	TC	RD	RA	Z	answers	TTLs	rejected
+#types	time	string	addr	port	addr	port	enum	count	interval	string	count	string	count	string	count	string	bool	bool	bool	bool	count	vector[string]	vector[interval]	bool
+1617649920.691766	ClUCMA2EZWYGNfROte	10.10.220.5	65075	10.10.220.1	53	udp	31041	-	tile-service.weather.microsoft.com	1	C_INTERNET	1	A	-	-	F	F	T	F	0	-	-	F
+1617649921.078520	ClUCMA2EZWYGNfROte	10.10.220.5	65075	10.10.220.1	53	udp	31041	-	tile-service.weather.microsoft.com	1	C_INTERNET	1	A	-	-	F	F	T	F	0	-	-	F
+1617649923.437856	CM5IxG3iL1V9HD4vKg	10.10.220.5	49552	10.10.220.1	53	udp	23572	-	www.google-analytics.com	1	C_INTERNET	1	A	-	-	F	F	T	F	0	-	-	F
+1617649925.330243	CO2l7S38G5ZueUokVb	10.10.220.5	52473	10.10.220.1	53	udp	55821	-	src.ebay-us.com	1	C_INTERNET	1	A	-	-	F	F	T	F	0	-	-	F
+1617649925.347288	C8lCkj1GO0Y2t3Ox9k	10.10.220.5	61574	10.10.220.1	53	udp	17170	-	dt.adsafeprotected.com	1	C_INTERNET	1	A	-	-	F	F	T	F	0	-	-	F
+1617649925.405163	CpBvZy174W9NATldb	10.10.220.5	52461	10.10.220.1	53	udp	36355	-	www.bing.com	1	C_INTERNET	1	A	-	-	F	F	T	F	0	-	-	F
+1617649925.425338	CW7IGU2klYh4maUhLe	10.10.220.5	65405	10.10.220.1	53	udp	18774	-	pagead2.googlesyndication.com	1	C_INTERNET	1	A	-	-	F	F	T	F	0	-	-	F
+1617649925.501845	C43r3C2m201Ed9N7u5	10.10.220.5	52302	10.10.220.1	53	udp	17852	-	pulsar.ebay.com	1	C_INTERNET	1	A	-	-	F	F	T	F	0	-	-	F
+1617649925.606997	CAKWi7LngLUTr2q8k	10.10.220.5	5353	224.0.0.251	5353	udp	0	-	1a2459b7-18b7-4a90-a1cd-3f17510ce113.local	-	-	-	-	0	NOERROR	T	F	F	F	0	::,0.0.0.0,10.10.220.5	0.000000,0.000000,0.000000	F
+1617649925.607226	Cs8qd33QD6vWSfActl	fe80::a491:9c23:c462:9c5c	5353	ff02::fb	5353	udp	0	-	1a2459b7-18b7-4a90-a1cd-3f17510ce113.local	-	-	-	-	0	NOERROR	T	F	F	F	0	::,0.0.0.0,10.10.220.5	0.000000,0.000000,0.000000	F
+1617649934.076121	CjbPII2zv9bj01C1wl	10.10.220.5	56059	10.10.220.1	53	udp	44208	-	amazon-scama.blogspot.com	1	C_INTERNET	1	A	-	-	F	F	T	F	0	-	-	F
+1617649934.249137	CXVIBs2bwbG0kdxVCb	10.10.220.5	55913	10.10.220.1	53	udp	8785	-	nav.smartscreen.microsoft.com	1	C_INTERNET	1	A	-	-	F	F	T	F	0	-	-	F
+1617649934.521964	CahNCE4fJOGkptWvGc	10.10.220.5	60490	10.10.220.1	53	udp	50144	-	www.gstatic.com	1	C_INTERNET	1	A	-	-	F	F	T	F	0	-	-	F
+1617649934.655058	CgkFrK3WB2qYBA1k3b	10.10.220.5	56396	10.10.220.1	53	udp	40687	-	www.blogger.com	1	C_INTERNET	1	A	-	-	F	F	T	F	0	-	-	F
+1617649934.655454	Cx7tKPCVQBLnZNK55	10.10.220.5	55018	10.10.220.1	53	udp	6890	-	www.offset.com	1	C_INTERNET	1	A	-	-	F	F	T	F	0	-	-	F
+1617649934.659130	CIiEQvjG9cMmNYOI1	10.10.220.5	65434	10.10.220.1	53	udp	37865	-	resources.blogblog.com	1	C_INTERNET	1	A	-	-	F	F	T	F	0	-	-	F
+1617649934.660114	C0YkcO8uCDn0NMt5l	10.10.220.5	53058	10.10.220.1	53	udp	28179	-	themes.googleusercontent.com	1	C_INTERNET	1	A	-	-	F	F	T	F	0	-	-	F
+1617649934.702250	Cgazm12vPw3xAr9CM5	10.10.220.5	60447	10.10.220.1	53	udp	42172	-	fonts.gstatic.com	1	C_INTERNET	1	A	-	-	F	F	T	F	0	-	-	F
+1617649934.775325	Clx0If4QB1Sjyt2qf2	10.10.220.5	64616	10.10.220.1	53	udp	30966	-	smartscreen-prod.microsoft.com	1	C_INTERNET	1	A	-	-	F	F	T	F	0	-	-	F
+1617649938.427716	CXnbYSBhhR8NX6uk2	10.10.220.5	55098	10.10.220.1	53	udp	61853	-	edge.microsoft.com	1	C_INTERNET	1	A	-	-	F	F	T	F	0	-	-	F
+1617649938.616378	CmGvv51I9JawrfDnF2	10.10.220.5	49421	10.10.220.1	53	udp	38623	-	api.cognitive.microsofttranslator.com	1	C_INTERNET	1	A	-	-	F	F	T	F	0	-	-	F
+1617649955.894397	CSgwcS1yHnNudicWgd	10.10.220.5	52488	10.10.220.1	53	udp	39430	-	nav.smartscreen.microsoft.com	1	C_INTERNET	1	A	-	-	F	F	T	F	0	-	-	F
+1617649977.327892	CMa5GXNVniruXN849	10.10.220.5	49338	10.10.220.1	53	udp	7520	-	safebrowsing.googleapis.com	1	C_INTERNET	1	A	-	-	F	F	T	F	0	-	-	F
+1617649987.252661	CmvLqk4k1Ro4wqJfXa	10.10.220.5	58497	10.10.220.1	53	udp	51332	-	blob.weather.microsoft.com	1	C_INTERNET	1	A	-	-	F	F	T	F	0	-	-	F
+1617649990.154970	CpGj3xI5xJGxeA8J2	10.10.220.5	63917	10.10.220.1	53	udp	60207	-	t-ring.msedge.net	1	C_INTERNET	1	A	-	-	F	F	T	F	0	-	-	F
+1617649990.394143	CN2giA1yuQqUC4QI2c	10.10.220.5	58675	10.10.220.1	53	udp	55713	-	fp-vs-nocache.azureedge.net	1	C_INTERNET	1	A	-	-	F	F	T	F	0	-	-	F
+1617649990.637189	CUojv9Q7WtZtaRXbk	10.10.220.5	61549	10.10.220.1	53	udp	12110	-	ocsp.digicert.com	1	C_INTERNET	1	A	-	-	F	F	T	F	0	-	-	F
+1617649990.827090	C3wh3L3LgcPrCDbcvk	10.10.220.5	54091	10.10.220.1	53	udp	28817	-	l-ring.msedge.net	1	C_INTERNET	1	A	-	-	F	F	T	F	0	-	-	F
+1617649991.825773	CwkSfg1xIZm0iFNJ1h	10.10.220.5	63646	10.10.220.1	53	udp	28644	-	teams-ring.msedge.net	1	C_INTERNET	1	A	-	-	F	F	T	F	0	-	-	F
+1617649992.242895	C1DPLB3GAZUL6eL63c	10.10.220.5	60328	10.10.220.1	53	udp	52496	-	c-ring.msedge.net	1	C_INTERNET	1	A	-	-	F	F	T	F	0	-	-	F
+1617649992.567355	CdUW2R39sP0t1GWOpi	10.10.220.5	54162	10.10.220.1	53	udp	17256	-	fp-vp.azureedge.net	1	C_INTERNET	1	A	-	-	F	F	T	F	0	-	-	F
+#close	2021-06-03-14-08-27

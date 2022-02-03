@@ -51,10 +51,10 @@ def finish_conversion(dns, utils):
         utils.output_dir = pathlib.Path(utils.output_dir) # make sure it's a real Path object
         # create the directory if it doesn't exist
         utils.output_dir.mkdir(parents=True, exist_ok=True)
-        start_path = pathlib.Path(utils.json_output_filepath)
+        start_path = pathlib.Path(utils.secflow_output_filepath)
         filename = start_path.stem + start_path.suffix
-        utils.json_output_filepath = str(start_path.rename(pathlib.PurePath(utils.output_dir, filename)))
-    print("Conversion complete! Final JSON Output stored at", utils.json_output_filepath)
+        utils.secflow_output_filepath = str(start_path.rename(pathlib.PurePath(utils.output_dir, filename)))
+    print("Conversion complete! Final Secflow Output stored at", utils.secflow_output_filepath)
 
 
 def convert_zeek(zeekfile_location, zeek_dnsfile_location=None, output_dir=None):
@@ -76,9 +76,10 @@ def convert_zeek(zeekfile_location, zeek_dnsfile_location=None, output_dir=None)
 
     # most of the heavy lifting happens here
     success = zeekutils.zeek_2_secflows(utils)
-    if success:
+    if success and len(utils.secflows) > 0:
         finish_conversion(dns, utils)
     else:
+        print("No traffic was converted to Secflows.")
         utils.cleanup_files()
 
 

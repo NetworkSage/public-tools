@@ -32,8 +32,8 @@ class Utilities():
         self.filtered_filepath = ""
         self.secflows = collections.OrderedDict()  # dict of Secflow objects (TCP, UDP, or ICMP)
         self.file_start_time = float(99999999999)  # set it impossibly high at beginning
-        self.secflows_filepath = ""  # file to temporarily store just the secflows with proper formatting. Needed in order to have a consistent file to hash
-        self.json_output_filepath = ""  # file to store the final output intended to be sent back to the caller
+        self.tmp_filepath = ""  # file to temporarily store just the secflows with proper formatting. Needed in order to have a consistent file to hash
+        self.secflow_output_filepath = ""  # file to store the final output intended to be sent back to the caller
         self.sample_name = ""
         self.secflows_hash = ""  # used to store the hash of the secflows file
         self.zeekflows = collections.OrderedDict()
@@ -49,15 +49,15 @@ class Utilities():
                 os.remove(self.filtered_filepath)
             except OSError:
                 pass
-        # delete the .sf temporary file, if it exists
+        # delete the temporary file, if it exists
         try:
-            os.remove(self.secflows_filepath)
+            os.remove(self.tmp_filepath)
         except OSError:
             pass
-        if self.is_streaming: # only delete if streaming
-            # delete the .json temporary file, if it exists
+        if self.is_streaming or len(self.secflows) == 0: # only delete if streaming or empty
+            # delete the final output .sf file, if it exists
             try:
-                os.remove(self.json_output_filepath)
+                os.remove(self.secflow_output_filepath)
             except OSError:
                 pass
 
@@ -78,11 +78,11 @@ class Utilities():
         # get the proper file name
         last_dot = self.filtered_filepath.rfind(".")
         if last_dot == -1:  # no extension in file name
-            self.secflows_filepath = self.filtered_filepath + ".sf"
+            self.tmp_filepath = self.filtered_filepath + ".tmp"
         else:
-            self.secflows_filepath = self.filtered_filepath[:last_dot] + ".sf"
+            self.tmp_filepath = self.filtered_filepath[:last_dot] + ".tmp"
 
-        with open(self.secflows_filepath, "w") as sf_out:
+        with open(self.tmp_filepath, "w") as sf_out:
             for secflow in self.secflows.keys():
                 if self.secflows[secflow].protocol_information in ["ICMP"]:
                     first_delimiter = self.secflows[secflow].key.find(":")
@@ -123,26 +123,26 @@ class Utilities():
         if self.is_streaming: # this is streaming mode
             time_str = str(self.file_start_time)
             start_time_str = str(time_str[:time_str.find(".")])
-            self.json_output_filepath = self.system_type + "_" + start_time_str + ".json"
+            self.secflow_output_filepath = self.system_type + "_" + start_time_str + ".sf"
         else:
-            if not self.is_streaming and not Path(self.secflows_filepath).is_file():
-                print("Warning:", self.secflows_filepath, "does not exist. Aborting.")
+            if not self.is_streaming and not Path(self.tmp_filepath).is_file():
+                print("Warning:", self.tmp_filepath, "does not exist. Aborting.")
                 sys.exit(1)
             else:
                 # get the proper file name
                 last_dot = self.filtered_filepath.rfind(".")
                 if last_dot == -1:  # no extension in file name
-                    self.json_output_filepath = self.filtered_filepath + ".json"
+                    self.secflow_output_filepath = self.filtered_filepath + ".sf"
                 else:
-                    self.json_output_filepath = self.filtered_filepath[:last_dot] + ".json"
+                    self.secflow_output_filepath = self.filtered_filepath[:last_dot] + ".sf"
 
         """Use the dictionary version of this file to convert it (plus some other information) to JSON
         """
         # first, make sure we're in ascending relativeStart order
         self.secflows = {k: v for k, v in sorted(self.secflows.items(), key=lambda item: item[1].relative_start_time)}
 
-        with open(self.json_output_filepath, "w") as json_outfile:
-            self.sample_name = os.path.basename(self.json_output_filepath)
+        with open(self.secflow_output_filepath, "w") as secflow_outfile:
+            self.sample_name = os.path.basename(self.secflow_output_filepath)
             rows = []
             for flow in self.secflows.keys():
                 if self.secflows[flow].protocol_information in ["ICMP"]:
@@ -167,11 +167,11 @@ class Utilities():
                               "protocolInformation": self.secflows[flow].protocol_information,
                               "duration": self.secflows[flow].duration}]
             # metadata for the file that is important to keep track of
-            json_output = {"hash": self.secflows_hash, "trafficDate": str(self.file_start_time),
+            secflow_output = {"hash": self.secflows_hash, "trafficDate": str(self.file_start_time),
                           "fileName": self.sample_name,
                           "flashes": rows}  # note: can rename flashes to secflows
-            json.dump(json_output, json_outfile)
-            return self.json_output_filepath
+            json.dump(secflow_output, secflow_outfile)
+            return self.secflow_output_filepath
 
     def check_output_sanity(self):
         """Determines if there are any issues with the final output file. Issues could include:
@@ -180,8 +180,8 @@ class Utilities():
         """
 
         try:
-            with open(self.json_output_filepath, "r") as json_outfile:
-                out_file = json.load(json_outfile)
+            with open(self.secflow_output_filepath, "r") as secflow_outfile:
+                out_file = json.load(secflow_outfile)
                 if out_file["trafficDate"] == "99999999999.0": #default date value
                     if len(out_file["flashes"]) == 0:
                         print("File has no secflows to upload. NetworkSage currently handles only IPv4 to or from the Internet. Nothing to do.")

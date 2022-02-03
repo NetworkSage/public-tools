@@ -195,12 +195,15 @@ class DnsService:
                     try:
                         if int.from_bytes(pkt[answers_start + num_bytes_into_answers + 8 : answers_start + num_bytes_into_answers + 10]
                                         , "big") == 4: # it's an IPv4 A record
-                            self.questions[q_name].add(packet_info.source_port
-                                                        , packet_info.packet_start_time
-                                                        , str(ipaddress.ip_address(
-                                                                pkt[answers_start + num_bytes_into_answers + 10 : answers_start + num_bytes_into_answers + 14]
+                            # add the information about that mapping as a tuple
+                            self.questions[q_name].add(
+                                                            (packet_info.source_port
+                                                            , packet_info.packet_start_time
+                                                            , str(ipaddress.ip_address(
+                                                                    pkt[answers_start + num_bytes_into_answers + 10 : answers_start + num_bytes_into_answers + 14]
                                                                     )
                                                                 )
+                                                            )
                                                         )
                     except:
                         print("Some non-fatal error with", str(pkt[answers_start

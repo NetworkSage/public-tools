@@ -58,17 +58,12 @@ def run_tests():
                     }
                     ,
                     { "inputType": "zeek"
-                    , "filename": "testCase11_oneFlowIsProcessablePlusPassiveDNS.conn.log"
+                    , "filename": "testCase11_emptySansHeaders.conn.log"
                     , "hasDNS": False
                     }
                     ,
                     { "inputType": "zeek"
-                    , "filename": "testCase12_emptySansHeaders.conn.log"
-                    , "hasDNS": False
-                    }
-                    ,
-                    { "inputType": "zeek"
-                    , "filename": "testCase13_icmp_plus_others.conn.log"
+                    , "filename": "testCase12_icmp_plus_others.conn.log"
                     , "hasDNS": True
                     }
                 ]
