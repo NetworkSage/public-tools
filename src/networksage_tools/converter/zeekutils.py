@@ -181,8 +181,8 @@ def zeek_2_secflows(utils):
     # store file as a dict for easier processing
     store_zeekflows(utils)
     if len(utils.zeekflows) == 0:
-        print("Error: No Zeek flows were found in file. Aborting.")
-        sys.exit(1)
+        print("No Zeek flows were found in file. No traffic was converted to Secflows.")
+        return False
 
     # remove local connections
     remove_local_traffic_from_zeek_file(utils)
@@ -192,3 +192,4 @@ def zeek_2_secflows(utils):
 
     # convert from Zeek to secFlow
     convert_zeek_to_secflow(utils)
+    return True

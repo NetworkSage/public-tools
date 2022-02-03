@@ -12,7 +12,7 @@
 import argparse
 import sys
 import platform
-from pathlib import Path
+import pathlib
 from networksage_tools.converter import pcaputils
 from networksage_tools.converter import zeekutils
 from networksage_tools.common_utilities import utilities
@@ -46,14 +46,22 @@ def finish_conversion(dns, utils):
     print("Cleaning up temporary files")
     utils.cleanup_files()
 
+    if utils.output_dir is not None:
+        # relocate the file
+        utils.output_dir = pathlib.Path(utils.output_dir) # make sure it's a real Path object
+        # create the directory if it doesn't exist
+        utils.output_dir.mkdir(parents=True, exist_ok=True)
+        start_path = pathlib.Path(utils.json_output_filepath)
+        filename = start_path.stem + start_path.suffix
+        utils.json_output_filepath = str(start_path.rename(pathlib.PurePath(utils.output_dir, filename)))
     print("Conversion complete! Final JSON Output stored at", utils.json_output_filepath)
 
 
-def convert_zeek(zeekfile_location, zeek_dnsfile_location=None):
+def convert_zeek(zeekfile_location, zeek_dnsfile_location=None, output_dir=None):
     """Handles all of the Zeek-specific conversion needs. Takes an optional DNS log.
     """
     my_platform = platform.system().lower()
-    utils = utilities.Utilities(str(zeekfile_location), my_platform)  # create an instance of utils to use
+    utils = utilities.Utilities(str(zeekfile_location), my_platform, output_dir=output_dir)  # create an instance of utils to use
     dns = dnsservice.DnsService(utils)  # create an instance of the DnsService class to use
 
     if zeek_dnsfile_location is not None:
@@ -67,15 +75,18 @@ def convert_zeek(zeekfile_location, zeek_dnsfile_location=None):
     zeekutils.validate_file_format(utils)
 
     # most of the heavy lifting happens here
-    zeekutils.zeek_2_secflows(utils)
-    finish_conversion(dns, utils)
+    success = zeekutils.zeek_2_secflows(utils)
+    if success:
+        finish_conversion(dns, utils)
+    else:
+        utils.cleanup_files()
 
 
-def convert_pcap(pcapfile_location):
+def convert_pcap(pcapfile_location, output_dir=None):
     """Handles all of the PCAP-specific conversion needs. Supports PCAPNG as well.
     """
     my_platform = platform.system().lower()
-    utils = utilities.Utilities(str(pcapfile_location), my_platform)  # create an instance of utils to use
+    utils = utilities.Utilities(str(pcapfile_location), my_platform, output_dir=output_dir)  # create an instance of utils to use
     dns = dnsservice.DnsService(utils)  # create an instance of the DnsService class to use
 
     # make sure the file is a valid capture file
@@ -87,7 +98,12 @@ def convert_pcap(pcapfile_location):
     """ we only know how long a secFlow lasted when we've captured it all, so go back through the dictionary and update this now.
     """
     utils.set_secflow_durations()
-    finish_conversion(dns, utils)
+    if len(utils.secflows) > 0:
+        finish_conversion(dns, utils)
+    else:
+        print("No traffic was converted to Secflows.")
+        utils.cleanup_files()
+
 
 
 if __name__ == "__main__":
@@ -115,12 +131,12 @@ if __name__ == "__main__":
         print("Error: can only parse Zeek OR PCAP, not both at same time.")
         sys.exit(1)
     elif args.zeekConnLog:
-        zeekfile_location = Path(args.zeekConnLog)
+        zeekfile_location = pathlib.Path(args.zeekConnLog)
         if not zeekfile_location.is_file():
             print("Error:", zeekfile_location, "does not exist.")
             sys.exit(1)
         if args.zeekDNSLog:
-            zeek_dnsfile_location = Path(args.zeekDNSLog)
+            zeek_dnsfile_location = pathlib.Path(args.zeekDNSLog)
             if not zeek_dnsfile_location.is_file():
                 print("Error:", zeek_dnsfile_location, "does not exist.")
                 sys.exit(1)
@@ -128,7 +144,7 @@ if __name__ == "__main__":
             print("No Zeek DnsService log specified. Naming of secFlows may be suboptimal.")
             zeek_dnsfile_location = None
     elif args.pcap:
-        pcapfile_location = Path(args.pcap)
+        pcapfile_location = pathlib.Path(args.pcap)
         if not pcapfile_location.is_file():
             print("Error:", pcapfile_location, "does not exist.")
             sys.exit(1)
