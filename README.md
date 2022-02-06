@@ -33,6 +33,12 @@ Note that this package requires `libpcap-dev` to be installed on your system. Pl
 sudo apt-get install libpcap-dev
 ```
 
+While Windows isn't yet supported due to issues with underlying libraries, we'd welcome anyone who wants to document the steps to make it work. At the very minimum, you will need the following:
+```
+A C++ compiler. Microsoft Visual Studio Build Tools is known to work.
+Npcap's SDK, which is a replacement for the WinPCAP developer's kit.
+```
+
 To install the `networksage` package, simply type the following:
 ```
 pip install networksage
