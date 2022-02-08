@@ -22,7 +22,7 @@ from filelock import SoftFileLock, Timeout
 from networksage_tools.common_utilities import packet
 from networksage_tools.common_utilities import iputils
 from networksage_tools.common_utilities import dnsservice
-from networksage_tools.wrappers import wrappers as networksage
+from networksage_wrappers.wrappers import wrappers as networksage
 
 my_api_key_var = "NETWORKSAGE_API_KEY"
 api_key = os.environ.get(my_api_key_var)
