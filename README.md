@@ -79,7 +79,7 @@ This module allows you to convert captured network traffic from any of our suppo
 
 To import this module into your project, type the following:
 ```
-from networksage_tools.converter import converter
+from networksage_tools.converter import convert
 ```
 
 #### Usage
@@ -87,13 +87,13 @@ from networksage_tools.converter import converter
 To convert a PCAP or PCAPNG file into an unenriched Secflow file, simply enter the following:
 
 ```
-converter.convert_pcap(<path_to_pcap_file>) 
+convert.convert_pcap(<path_to_pcap_file>) 
 ```
 
 To convert a Zeek Conn log into an unenriched Secflow file, simply enter the following:
 
 ```
-converter.convert_zeek(<path_to_conn_log>, <optional_path_to_dns_log>) 
+convert.convert_zeek(<path_to_conn_log>, <optional_path_to_dns_log>) 
 ```
 If you have (and would like to include) DNS information that was captured by Zeek, provide the `dns.log` in addition to the `conn.log`. Naming will be much enhanced by doing so.
 
