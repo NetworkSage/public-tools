@@ -60,6 +60,7 @@ def capture(**kwargs):
        of each packet to speed up processing and stay in-memory storage efficient.
     """
     utils=kwargs['utils']
+    is_verbose = kwargs['is_verbose']
     # capture just 350 bytes from each packet (some multi-answer DNS packets were being cut short @ 300 bytes)
     capture_handle=pcapy.open_live(kwargs['interface'], 350, 0, 1) # setting the timeout value to -1 is unpredictable, and 0 is waiting forever.
     capture_handle.setfilter(kwargs['bpf'])
@@ -77,6 +78,7 @@ def process_packets(**kwargs):
     """Processes our accumulating packet buffer in a FIFO manner. Assigns each packet to the proper Secflow.
     """
     utils = kwargs['utils']
+    is_verbose = kwargs['is_verbose']
     first = True # we need to collect timestamp information on the first packet
     dns = dnsservice.DnsService(utils)  # create an instance of the DnsService class to use
     while not utils.stop_thread:
@@ -188,6 +190,7 @@ def send_sample(**kwargs):
     utils = kwargs['utils']
     capture_thread = kwargs['capture_thread']
     processing_thread = kwargs['processing_thread']
+    is_verbose = kwargs['is_verbose']
 
     # stop active threads
     utils.stop_thread = True
@@ -207,9 +210,15 @@ def send_sample(**kwargs):
     if api_key is None:
         print("Would be ready to send", str(len(utils.secflows)), "secflows out to NetworkSage, but no API key present.")
     else:
-        #print("Uploading sample to NetworkSage!")
         with open(utils.secflow_output_filepath, 'rb') as indata:
             sample_data = indata.read()
         sample_type = "secflow"
-        networksage.upload_sample(utils.sample_name, sample_data, sample_type)
+        if len(utils.secflows) > 0:
+            networksage.upload_sample(utils.sample_name, sample_data, sample_type)
+            if is_verbose:
+                print("Captured", str(len(utils.secflows)), "secflows.")
+                print("Uploading sample "+str(uuid)+" to NetworkSage!")
+        else:
+            if is_verbose:
+                print("No secflows captured. Nothing to upload.")
     utils.cleanup_files()

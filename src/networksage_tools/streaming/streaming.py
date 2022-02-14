@@ -62,7 +62,7 @@ def schedule_cleanup(**kwargs):
     s.run()
 
 
-def start(interface, duration=300):
+def start(interface, duration=300, is_verbose=False):
     """Start the streaming functionality. Expects the name of the interface to capture network data from, and a duration
         (in seconds) to capture before uploading to NetworkSage. This function will run until killed, continually
         generating and uploading samples.
@@ -87,10 +87,13 @@ def start(interface, duration=300):
                                         , kwargs={"interface": interface
                                                 , "bpf": captureutils.create_bpf()
                                                 , "utils": utils
+                                                , "is_verbose": is_verbose
                                                 }
                                         )
         processing_thread = threading.Thread(target=captureutils.process_packets
-                                            , kwargs={"utils":utils}
+                                            , kwargs={"utils":utils
+                                                    , "is_verbose": is_verbose
+                                                    }
                                             )
         iteration_timer = threading.Timer(duration
                                         , captureutils.send_sample
@@ -98,6 +101,7 @@ def start(interface, duration=300):
                                                 , "capture_thread":capture_thread
                                                 , "processing_thread":processing_thread
                                                 , "key":None
+                                                , "is_verbose": is_verbose
                                                 }
                                         )
         print("Capturing on", interface, "for", str(duration), "seconds")

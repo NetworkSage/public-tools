@@ -68,9 +68,9 @@ from networksage_tools.streaming import streaming
 To capture Secflows continuously using this module from your project, enter the following (note that you'll need to be root to capture packets):
 
 ```
-streaming.start(<interface_name>, <duration_in_seconds>) 
+streaming.start(<interface_name>, <duration_in_seconds>, <optional_verbosity>) 
 ```
-Note that the above will run in perpetuity, capturing packets from the interface you specified (such as "enp0s3" on Ubuntu systems). Every time the specified duration you provided is reached (if you provide no value, it defaults to 300 seconds), a sample will be created and uploaded to your NetworkSage account.
+Note that the above will run in perpetuity, capturing packets from the interface you specified (such as "enp0s3" on Ubuntu systems). Every time the specified duration you provided is reached (if you provide no value, it defaults to 300 seconds), a sample will be created and uploaded to your NetworkSage account. Providing the optional `is_verbose` value will print a small amount of information about the number of flows and its UUID.
 
 ### B. Standalone Converter
 **module name:** `converter`
