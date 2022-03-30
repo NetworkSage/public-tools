@@ -151,7 +151,7 @@ class DnsService:
                                 , "big") == 1: # only do this for A records
                 has_an_a_record = True
                 if cnt == 0:
-                    q_name=re.sub(r"[\x00-\x20]"
+                    q_name=re.sub(r"[\x00-\x2C,\x2E-\x2F,\x3A-\x40,\x5B-\x60,\x7B-\x7F]"
                                 , r"."
                                 , pkt[(packet_info.upper_layer_start + 13): ((packet_info.upper_layer_start + 13)
                                                                             + null_position )].decode("ascii")) + "."
@@ -165,7 +165,7 @@ class DnsService:
                                 , "big") == 12: # only do this for PTR records
                 has_ptr_record = True
                 if cnt == 0:
-                    q_name=re.sub(r"[\x00-\x20]",r".", pkt[(packet_info.upper_layer_start + 13):
+                    q_name=re.sub(r"[\x00-\x2C,\x2E-\x2F,\x3A-\x40,\x5B-\x60,\x7B-\x7F]",r".", pkt[(packet_info.upper_layer_start + 13):
                                                             ((packet_info.upper_layer_start + 13)
                                                             + null_position
                                                             )].decode("ascii")) + "."
@@ -230,7 +230,7 @@ class DnsService:
                     name_length = int.from_bytes(pkt[answers_start + num_bytes_into_answers + 8 : answers_start + num_bytes_into_answers + 10]
                                                 , "big")
                     try:
-                        answer=re.sub(r"[\x00-\x20]"
+                        answer=re.sub(r"[\x00-\x2C,\x2E-\x2F,\x3A-\x40,\x5B-\x60,\x7B-\x7F]"
                             , r"."
                             , pkt[answers_start + num_bytes_into_answers + 10 : answers_start + num_bytes_into_answers + 10 + name_length].decode("ascii")
                                         )[1:]

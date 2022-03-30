@@ -65,10 +65,13 @@ def run_tests():
                     { "inputType": "zeek"
                     , "filename": "testCase12_icmp_plus_others.conn.log"
                     , "hasDNS": True
+                    },
+                    { "inputType": "pcap"
+                    , "filename": "testCase13_mtbDotcom_bangInPlaceOfDot.pcap"
                     }
                 ]
     test_dir = None
-    with importlib.resources.path(__package__, "tests") as p:
+    with importlib.resources.files(__package__).joinpath("tests") as p:
         test_dir = p
     inputs_location = str(pathlib.PurePath(test_dir, "inputs"))
     outputs_location = pathlib.PurePath(test_dir, "outputs")

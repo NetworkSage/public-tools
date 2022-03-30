@@ -142,19 +142,43 @@ def convert_zeek_to_secflow(utils):
                                          zeekflow.history):  # Zeek saw no retransmitted payloads from the destination
                             max_nonservice_db = 0
                         else:
-                            max_nonservice_db = int(zeekflow.dest_bytes)
+                            try:
+                                max_nonservice_db = int(zeekflow.dest_bytes)
+                            except:
+                                pass # wasn't an int, so we keep what we had
                     else:
-                        max_nonservice_db = int(zeekflow.dest_bytes)
+                        try:
+                            max_nonservice_db = int(zeekflow.dest_bytes)
+                        except:
+                            pass # wasn't an int, so we keep what we had
                 else:
-                    max_nonservice_sb = max(max_nonservice_sb, int(zeekflow.source_ip_bytes))
-                    max_nonservice_db = max(max_nonservice_db, int(zeekflow.dest_ip_bytes))
+                    try:
+                        max_nonservice_sb = max(max_nonservice_sb, int(zeekflow.source_ip_bytes))
+                    except:
+                        pass # wasn't an int, so we keep what we had
+                    try:
+                        max_nonservice_db = max(max_nonservice_db, int(zeekflow.dest_ip_bytes))
+                    except:
+                        pass # wasn't an int, so we keep what we had
             else:
                 if max_service_sb == 0 or max_service_db == 0:
-                    max_service_sb = int(zeekflow.source_bytes)
-                    max_service_db = int(zeekflow.dest_bytes)
+                    try:
+                        max_service_sb = int(zeekflow.source_bytes)
+                    except:
+                        pass # wasn't an int, so we keep what we had
+                    try:
+                        max_service_db = int(zeekflow.dest_bytes)
+                    except:
+                        pass # wasn't an int, so we keep what we had
                 else:
-                    max_service_sb = max(max_service_sb, int(zeekflow.source_bytes))
-                    max_service_db = max(max_service_db, int(zeekflow.dest_bytes))
+                    try:
+                        max_service_sb = max(max_service_sb, int(zeekflow.source_bytes))
+                    except:
+                        pass # wasn't an int, so we keep what we had
+                    try:
+                        max_service_db = max(max_service_db, int(zeekflow.dest_bytes))
+                    except:
+                        pass # wasn't an int, so we keep what we had
         if secflow_object is not None:
             # at end of the flow group, collect what we've captured and update the secFlow object if the value is higher than what we already have
             secflow_object.source_payload_bytes = max(secflow_object.source_payload_bytes
