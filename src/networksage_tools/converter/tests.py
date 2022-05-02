@@ -7,9 +7,11 @@
     See the accompanying LICENSE file for more information.
 """
 
+import json
 import pathlib
 import importlib.resources
 from networksage_tools.converter import convert
+
 
 def run_tests():
     test_cases = [
@@ -68,6 +70,9 @@ def run_tests():
                     },
                     { "inputType": "pcap"
                     , "filename": "testCase13_mtbDotcom_bangInPlaceOfDot.pcap"
+                    },
+                    { "inputType": "pcap"
+                    , "filename": "testCase14_faturasatacada_phish_with_nonephemeral_dport9999.pcap"
                     }
                 ]
     test_dir = None
@@ -102,4 +107,68 @@ def run_tests():
             print("===============================================================")
         except:
             print("Something unexpected happened for this test case. Skipping.")
-    print("Tests complete! Compare tests in", outputs_location, "to those in", expected_outputs_location, "to determine if any issues have occurred.")
+    print("Tests generation complete! Comparing secflows of tests in", outputs_location, "to those in", expected_outputs_location, "to determine if any issues have occurred.")
+    diffs = 0
+    for tc in test_cases:
+        name = tc["filename"]
+        p = pathlib.Path(name)
+        if p.suffix == ".log":
+            updated_name = str(p.with_suffix(".sf"))
+        else:
+            updated_name = p.stem + "_filtered.sf"
+        print("Comparing expected vs. output for", updated_name)
+        expected_loc = pathlib.PurePath(expected_outputs_location, updated_name)
+        output_loc = pathlib.PurePath(outputs_location, updated_name)
+        expected_data = None
+        output_data = None
+        try:
+            with open(expected_loc, "rb") as expected:
+                expected_data = json.load(expected)
+            with open(output_loc, "rb") as output:
+                output_data = json.load(output)
+        except:
+            print("Something went wrong while trying to load files. Skipping test.")
+            continue
+        if expected_data is None or output_data is None:
+            print("Something went wrong while trying to load files. Skipping test.")
+            continue
+
+        if expected_data["trafficDate"] != output_data["trafficDate"]:
+            print("Traffic dates differ: Expected",
+                  expected_data["trafficDate"],
+                  "vs. Output",
+                  output_data["trafficDate"]
+                  )
+        ordered_expected = []
+        for flash in expected_data["flashes"]:
+            ordered_expected += [set(flash.items())]
+        ordered_output = []
+        for flash in output_data["flashes"]:
+            ordered_output += [set(flash.items())]
+
+        if len(ordered_expected) != len(ordered_output):
+            print("Different number of secflows: Expected ("
+                  + str(len(ordered_expected))
+                  + ") output vs. Output ("
+                  + str(len(ordered_output))
+                  + ")"
+                  )
+        for i in range(0, len(ordered_expected)):
+            try:
+                if len(ordered_expected[i] ^ ordered_output[i]) != 0:
+                    print("Mismatch for secflow"
+                          , str(i)+": Expected"
+                          , ordered_expected[i]
+                          , "vs. Output"
+                          , ordered_output[i]
+                          )
+                    diffs += 1
+            except:
+                print("Nothing found in position", i)
+                diffs += 1
+                break
+    if diffs == 0:
+        print("Success! No differences between expected and output!")
+    else:
+        print("Found", diffs, "differences between expected and output data. Please review.")
+

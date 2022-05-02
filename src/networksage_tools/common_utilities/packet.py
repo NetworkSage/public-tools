@@ -70,7 +70,6 @@ class PacketInfo():
 
         side_a = self.source_ip + ":" + self.source_port
         side_b = self.dest_ip + ":" + self.dest_port
-
         if iputils.check_if_local_ip(str(self.source_ip)):
             if iputils.check_if_local_ip(str(self.dest_ip)):
                 # both sides are local; should only occur when it's DNS that we needed earlier
@@ -104,76 +103,73 @@ class PacketInfo():
                                         )
                 self.utils.secflows[side_a] = object
                 return self.utils.secflows[side_a]
-            else:  # first IP has well-known or registered port, meaning it may actually be dest...so check the other side!
-                if iputils.check_if_local_ip(str(self.dest_ip)):
-                    if int(self.dest_port) > 49151:
-                        """This IP is local and has an ephemeral port, so create a new secflow object, store it in our
-                            Secflows dictionary, and return it.
-                        """
-                        object = secflow.Secflow(side_b
-                                                , self.dest_port
-                                                , self.source_ip
-                                                , self.source_port
-                                                , hdr
-                                                , self.utils.file_start_time
-                                                , self.protocol_information
-                                                )
-                        self.utils.secflows[side_b] = object
-                        return self.utils.secflows[side_b]
-                    else:  # both sides have ephemeral ports, and we see this packet first. So just call the first IP the source for now...shouldn't happen in this code!
-                        print("Warning: found two local IPs. This shouldn't happen!")
-                        object = secflow.Secflow(side_a
-                                                , self.source_port
-                                                , self.dest_ip
-                                                , self.dest_port
-                                                , hdr
-                                                , self.utils.file_start_time
-                                                , self.protocol_information
-                                                )
-                        self.utils.secflows[side_a] = object
-                        return self.utils.secflows[side_a]
-                else:  # possible source (2nd IP in line) is not local and may have a well-known or registered port
-                    if int(self.dest_port) > 49151:  # possibleSource is NOT local and has ephemeral port
-                        object = secflow.Secflow(side_b
-                                                , self.dest_port
-                                                , self.source_ip
-                                                , self.source_port
-                                                , hdr
-                                                , self.utils.file_start_time
-                                                , self.protocol_information
-                                                )
-                        self.utils.secflows[side_b] = object
-                        return self.utils.secflows[side_b]
-                    """Here we already know that this packet's source IP is local, the dest IP is not local, the source
-                       port is not ephemeral, and the dest port is not ephemeral...so now we should determine if the
-                       destination's port is well-known. If it is, then it's the destination. If it's not, then we
-                       should default to making the local IP the source.
+            else:
+                """The source IP of this packet is local AND has well-known or registered port, and the destination IP
+                    of this packet is NOT LOCAL (we know for sure via check in line # 75 above). So now try to figure 
+                    out if this is actually the first packet of an internal-to-external session, or if we're seeing an
+                    in-progress external-to-internal session. This analysis will necessarily have to be done based on
+                    port numbers and is fallible.
+                """
+                if int(self.dest_port) > 49151:
+                    """Destination IP of this packet is NOT local and has ephemeral port, so it's likely the source of 
+                        an external-to-internal session.
                     """
-                    if int(self.dest_port) < 1024:
-                        object = secflow.Secflow(side_a
-                                                , self.source_port
-                                                , self.dest_ip
-                                                , self.dest_port
-                                                , hdr
-                                                , self.utils.file_start_time
-                                                , self.protocol_information
-                                                )
-                        self.utils.secflows[side_a] = object
-                        return self.utils.secflows[side_a]
-                    else:
-                        """Both have ephemeral ports, and we see this packet first, but the other side is a local IP.
-                             So just call the local IP the source for now.
-                        """
+                    object = secflow.Secflow(side_b
+                                            , self.dest_port
+                                            , self.source_ip
+                                            , self.source_port
+                                            , hdr
+                                            , self.utils.file_start_time
+                                            , self.protocol_information
+                                            )
+                    self.utils.secflows[side_b] = object
+                    return self.utils.secflows[side_b]
+                """Here we already know that this packet's source IP is local, the dest IP is not local, the source
+                   port is not ephemeral, and the dest port is not ephemeral...so now we should determine if the
+                   destination's port is well-known. If it is, then it's more than likely the destination. If it's not, 
+                   then we should default to making the local IP (AKA the source IP of this packet) the source.
+                """
+                if int(self.dest_port) < 1024:
+                    object = secflow.Secflow(side_a
+                                            , self.source_port
+                                            , self.dest_ip
+                                            , self.dest_port
+                                            , hdr
+                                            , self.utils.file_start_time
+                                            , self.protocol_information
+                                            )
+                    self.utils.secflows[side_a] = object
+                    return self.utils.secflows[side_a]
+                else:
+                    """Both have ephemeral ports, and we see this packet first. The source of this packet has a local
+                        source IP and a non-local destination IP. So whichever port is lower should be the destination.
+                        IF both ports are the same, the source of this packet should be the session source (since we 
+                        have no way of knowing better).
+                    """
+                    if int(self.dest_port) > int(self.source_port):
+                        # dest port is higher, so it's treated as the source
                         object = secflow.Secflow(side_b
-                                                , self.dest_port
-                                                , self.source_ip
-                                                , self.source_port
-                                                , hdr
-                                                , self.utils.file_start_time
-                                                , self.protocol_information
-                                                )
+                                                 , self.dest_port
+                                                 , self.source_ip
+                                                 , self.source_port
+                                                 , hdr
+                                                 , self.utils.file_start_time
+                                                 , self.protocol_information
+                                                 )
                         self.utils.secflows[side_b] = object
                         return self.utils.secflows[side_b]
+                    else:
+                        # both ports are the same OR the source is higher, so source of this packet treated as the source
+                        object = secflow.Secflow(side_a
+                                                 , self.source_port
+                                                 , self.dest_ip
+                                                 , self.dest_port
+                                                 , hdr
+                                                 , self.utils.file_start_time
+                                                 , self.protocol_information
+                                                 )
+                        self.utils.secflows[side_a] = object
+                        return self.utils.secflows[side_a]
         else:  # first IP is not a local IP, so check the second IP in the line
             """ICMP is treated specially, since it doesn't have a port number...so we need to save the whole
                source/dest IP pair in addition to the protocol information.
@@ -203,55 +199,40 @@ class PacketInfo():
                                             )
                     self.utils.secflows[side_b] = object
                     return self.utils.secflows[side_b]
-            if int(self.dest_port) > 49151:
-                """ The second IP at least has an ephemeral port, so consider it as the source, create a new object,
-                    store it in our Secflows dictionary, and return it.
-                """
+            """Source IP is NOT a local IP. So at this point, the first packet we see in the session could either be
+                external-to-internal OR we're capturing a packet from the destination of an in-progress session. Either
+                way, we know at least one of the sides is not local, so we'll process the flow. To determine which side
+                is treated as the actual flow source, we'll simply look at the port numbers. If the source port of this
+                packet is greater than the destination, we'll treat it as the flow source. If the source and destination
+                ports are identical, we'll again treat this as the flow source (since this may actually be the first
+                packet in a session). Finally, if the destination port of this packet is greater than the source, we'll
+                treat the destination as the flow's source (since we have no way of knowing better).
+             """
+            if int(self.dest_port) > int(self.source_port):
+                # dest port is higher, so it's treated as the source
                 object = secflow.Secflow(side_b
-                                        , self.dest_port
-                                        , self.source_ip
-                                        , self.source_port
-                                        , hdr
-                                        , self.utils.file_start_time
-                                        , self.protocol_information
-                                        )
+                                         , self.dest_port
+                                         , self.source_ip
+                                         , self.source_port
+                                         , hdr
+                                         , self.utils.file_start_time
+                                         , self.protocol_information
+                                         )
                 self.utils.secflows[side_b] = object
                 return self.utils.secflows[side_b]
-            if not iputils.check_if_local_ip(str(self.dest_ip)):
-                """The second IP is not local and has a port in the well-known range, so consider it as the
-                   destination, create a new object, store it in our Secflows dictionary, and return it.
-                """
-                if int(self.dest_port) < 1024:
-                    object = secflow.Secflow(side_a
-                                            , self.source_port
-                                            , self.dest_ip
-                                            , self.dest_port
-                                            , hdr
-                                            , self.utils.file_start_time
-                                            , self.protocol_information
-                                            )
-                    self.utils.secflows[side_a] = object
-                    return self.utils.secflows[side_a]
-                else:
-                    print("We don't handle this case! Info:")
-                    print("Info (from determine_session_directionality):", self.dest_ip + ":" + self.dest_port
-                        , "listed as dest")
-                    print(self.source_ip + ":" + self.source_port
-                        , "listed as source")
             else:
-                """At least the second IP has a non-ephemeral port, and we see this packet first, but the second IP is
-                   a local IP. So just call the second IP the source for now.
-                """
-                object = secflow.Secflow(side_b
-                                        , self.dest_port
-                                        , self.source_ip
-                                        , self.source_port
-                                        , hdr
-                                        , self.utils.file_start_time
-                                        , self.protocol_information
-                                        )
-                self.utils.secflows[side_b] = object
-                return self.utils.secflows[side_b]
+                # both ports are the same OR the source is higher, so source of this packet treated as the source
+                object = secflow.Secflow(side_a
+                                         , self.source_port
+                                         , self.dest_ip
+                                         , self.dest_port
+                                         , hdr
+                                         , self.utils.file_start_time
+                                         , self.protocol_information
+                                         )
+                self.utils.secflows[side_a] = object
+                return self.utils.secflows[side_a]
+
 
     def is_local_dns_response(self, packet_data):
         try:

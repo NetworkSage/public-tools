@@ -17,6 +17,7 @@ import magic
 import pcapy
 from networksage_tools.common_utilities import packet
 
+
 def filter_capture_file_by_bpf(utils, bpf_to_apply):
     """Takes a Berkeley packet filter (BPF) and applies it to the capture file. Whatever remains after the BPF is
        applied will be saved to the output file.
