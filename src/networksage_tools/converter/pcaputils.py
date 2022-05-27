@@ -94,8 +94,9 @@ def validate_file_format(utils):
     """
 
     # check if file is valid
-    if not re.match(r"^(p|)cap(|(|\-)ng) capture file", magic.from_file(utils.original_filepath)):
-        print("Error:", utils.original_filepath + ",", "of type", magic.from_file(utils.original_filepath),
+    utils.file_format = magic.from_file(utils.original_filepath)
+    if not re.match(r"^(p|)cap(|(|\-)ng) capture file", utils.file_format):
+        print("Error:", utils.original_filepath + ",", "of type", utils.file_format,
               "is not an accepted file type.")
         sys.exit(1)
 

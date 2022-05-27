@@ -73,6 +73,30 @@ def run_tests():
                     },
                     { "inputType": "pcap"
                     , "filename": "testCase14_faturasatacada_phish_with_nonephemeral_dport9999.pcap"
+                    },
+                    { "inputType": "zeek"
+                        , "filename": "testCase15_chromeWin10StartChromeBrowser_JSON.conn.log"
+                        , "hasDNS": True
+                    }
+                    ,
+                    { "inputType": "zeek"
+                        , "filename": "testCase16_chromeWin10VisitAmazonScamaDotCom_JSON.conn.log"
+                        , "hasDNS": True
+                    }
+                    ,
+                    { "inputType": "zeek"
+                        , "filename": "testCase17_oneFlowNotProcessable_JSON.conn.log"
+                        , "hasDNS": False
+                    }
+                    ,
+                    { "inputType": "zeek"
+                        , "filename": "testCase18_oneFlowIsProcessable_JSON.conn.log"
+                        , "hasDNS": False
+                    }
+                    ,
+                    { "inputType": "zeek"
+                        , "filename": "testCase19_icmp_plus_others_JSON.conn.log"
+                        , "hasDNS": True
                     }
                 ]
     test_dir = None

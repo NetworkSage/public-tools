@@ -37,6 +37,7 @@ class Utilities():
         self.sample_name = ""
         self.secflows_hash = ""  # used to store the hash of the secflows file
         self.zeekflows = collections.OrderedDict()
+        self.file_format = None  # track format of data passed in
         self.packet_buffer = collections.deque() #create an empty buffer to store packets that have not yet been processed
         self.stop_thread = False #keep state of whether thread should be stopped
 

@@ -9,6 +9,7 @@
     See the accompanying LICENSE file for more information.
 """
 
+import json
 import re
 import socket
 import pickle
@@ -59,20 +60,56 @@ class DnsService:
               self.questions["someDomain.tld."]=[(someSrcPort, someTimestamp, "7.8.9.10"),(someSrcPort, someTimestamp, "1.2.3.4")]
               self.questions["4.3.2.1.in-addr.arpa."]=[(someSrcPort, someTimestamp, "someOtherDomain.tld.")]
            TODO: Handle PTR records for Zeek!
+
+           Order expected (if _NOT_ JSON; "field #" lines are my annotation):
+           Field #       1       2          3               4               5               6             7         8
+                        ts      uid     id.orig_h       id.orig_p       id.resp_h       id.resp_p       proto   trans_id
+
+           Field #       9       10        11               12             13         14           15        16
+                        rtt     query    qclass         qclass_name       qtype   qtype_name      rcode   rcode_name
+
+           Field #      17      18      19      20      21        22         23        24
+                        AA      TC      RD      RA      Z       answers     TTLs    rejected
+
+           Note that all field names are not used. If you do not have a field, please give it an appropriate default
+           value as defined by the Zeek format (https://docs.zeek.org/en/master/logs/dns.html).
         """
+        is_json = True if self.utils.file_format is not None and self.utils.file_format == "JSON data" else False
         with open(self.dns_logfile_path, "r") as dns_logfile:
             for line in dns_logfile:
-                if line.startswith("#"):  # ignore comment lines
-                    continue
-                dns_record = line.strip().split("\t")
-                start_time = float(dns_record[0])
-                roundtrip_time = dns_record[8]
-                source_port = dns_record[3]
-                q_name = dns_record[9] + "."  # we expect FQDNs in our files at this point
-                q_class = dns_record[10]
-                q_type = dns_record[12]
-                rcode_name = dns_record[15]
-                answers = dns_record[21]
+                if is_json:  # handle JSON
+                    dns_record = json.loads(line)
+                    try:
+                        start_time = float(dns_record["ts"])
+                        roundtrip_time = f'{dns_record["rtt"]}' if "rtt" in dns_record else "-"
+                        source_port = f'{dns_record["id.orig_p"]}'
+                        q_name = f'{dns_record["query"]}.'
+                        q_class = f'{dns_record["qclass"]}' if "qclass" in dns_record else "-"
+                        q_type = f'{dns_record["qtype"]}' if "qtype" in dns_record else "-"
+                        rcode_name = f'{dns_record["rcode_name"]}' if "rcode_name" in dns_record else "NOERROR"
+                        answers = ','.join(dns_record["answers"]) if "answers" in dns_record \
+                                                                     and type(dns_record["answers"]) == list else "-"
+                    except Exception as e:
+                        print("Something failed while parsing Zeek JSON data. Skipping line:\n{}".format(e))
+                        continue  # something didn't parse right
+                else:
+                    if line.startswith("#"):  # ignore comment lines
+                        continue
+                    try:
+                        dns_record = line.strip().split("\t")
+                        start_time = float(dns_record[0])
+                        roundtrip_time = dns_record[8]
+                        source_port = dns_record[3]
+                        q_name = dns_record[9] + "."  # we expect FQDNs in our files at this point
+                        q_class = dns_record[10]
+                        q_type = dns_record[12]
+                        rcode_name = dns_record[15]
+                        answers = dns_record[21]
+                    except Exception as e:
+                        print("Something failed while parsing Zeek JSON plaintext log data. Skipping line:\n{}".format(
+                                                                                                                    e)
+                        )
+                        continue  # something didn't parse right
                 internet_a_record = False
                 other_unknown_collectible_record = False
                 if q_class == "1" and q_type == "1": # we only want successful DNS lookups to the Internet for A records.

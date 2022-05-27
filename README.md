@@ -29,7 +29,7 @@ Finally, some of the Behaviors (when seen in a particular order within some peri
 ## Installation
 
 Note that this package requires `libpcap-dev` to be installed on your system. Please use your system's package manager (such as `apt` on Ubuntu) to install `libpcap-dev`:
-```
+```bash
 sudo apt-get install libpcap-dev
 ```
 
@@ -41,7 +41,7 @@ Npcap's SDK, which is a replacement for the WinPCAP developer's kit.
 
 
 To install the `networksage-tools` package, simply type the following:
-```
+```bash
 pip install networksage-tools
 ```
 
@@ -59,7 +59,7 @@ This module allows you to directly capture network traffic as unenriched Secflow
 * Secflows have no identifying data, so you can avoid worrying about accidentally leaking information (URIs, passwords, keys, etc...)
 
 To import this module into your project, type the following:
-```
+```python3
 from networksage_tools.streaming import streaming
 ```
 
@@ -67,7 +67,7 @@ from networksage_tools.streaming import streaming
 
 To capture Secflows continuously using this module from your project, enter the following (note that you'll need to be root to capture packets):
 
-```
+```python3
 streaming.start(<interface_name>, <duration_in_seconds>, <optional_verbosity>) 
 ```
 Note that the above will run in perpetuity, capturing packets from the interface you specified (such as "enp0s3" on Ubuntu systems). Every time the specified duration you provided is reached (if you provide no value, it defaults to 300 seconds), a sample will be created and uploaded to your NetworkSage account. Providing the optional `is_verbose` value will print a small amount of information about the number of flows and its UUID.
@@ -78,7 +78,7 @@ Note that the above will run in perpetuity, capturing packets from the interface
 This module allows you to convert captured network traffic from any of our supported formats (currently PCAP, PCAPNG, and Zeek) into unenriched Secflows (Secflows without flow category labels). This is useful if you already have network telemetry that you'd like to upload to NetworkSage, but you don't want to upload the original file (for privacy, size, or other reasons).
 
 To import this module into your project, type the following:
-```
+```python3
 from networksage_tools.converter import convert
 ```
 
@@ -86,17 +86,58 @@ from networksage_tools.converter import convert
 
 To convert a PCAP or PCAPNG file into an unenriched Secflow file, simply enter the following:
 
-```
+```python3
 convert.convert_pcap(<path_to_pcap_file>) 
 ```
 
 To convert a Zeek Conn log into an unenriched Secflow file, simply enter the following:
 
-```
+```python3
 convert.convert_zeek(<path_to_conn_log>, <optional_path_to_dns_log>) 
 ```
 If you have (and would like to include) DNS information that was captured by Zeek, provide the `dns.log` in addition to the `conn.log`. Naming will be much enhanced by doing so.
 
+`NOTE:`
+As of v1.0.0 of this package, we now support Zeek files in [JSON](https://docs.zeek.org/en/master/log-formats.html#zeek-json-format-logs) and plaintext [TSV](https://docs.zeek.org/en/master/log-formats.html#zeek-tsv-format-logs) (i.e. the OG) formats. If you are uploading plaintext logs, please make sure that your `conn.log` files have the following fields in the following order (_Field #_ lines are annotations for clarity below and should *NOT* be included in the file):
+```json
+        Field #  1       2        3                 4               5
+                ts      uid     id.orig_h       id.orig_p       id.resp_h
+        Field #    6             7        8        9               10
+                id.resp_p       proto   service duration        orig_bytes
+        Field #     11              12              13              14
+                resp_bytes      conn_state      local_orig      local_resp
+        Field #     15             16      17               18             19
+                missed_bytes    history orig_pkts       orig_ip_bytes  resp_pkts
+        Field #       20              21
+                resp_ip_bytes   tunnel_parents
+
+    An example of a flow line from the conn log is as follows ("field #" lines are my annotation):
+
+        Field #       1                        2                      3
+                1601060272.439360       CC9S3G178KjzSMTGRk      192.168.100.224
+        Field #   4             5        6       7       8          9
+                 137    192.168.100.255 137     udp     dns     12.114023
+        Field #  10     11    12      13     14      15      16       17
+                1186    0     S0      -       -       0       D       23
+        Field #  18     19      20      21
+                1830    0       0       -
+```
+
+For `dns.log` files (again, if you're *not* using JSON), make sure that the file matches the following:
+
+```json
+   Field #       1       2          3               4               5               6             7         8
+                ts      uid     id.orig_h       id.orig_p       id.resp_h       id.resp_p       proto   trans_id
+
+   Field #       9       10        11               12             13         14           15        16
+                rtt     query    qclass         qclass_name       qtype   qtype_name      rcode   rcode_name
+
+   Field #      17      18      19      20      21        22         23        24
+                AA      TC      RD      RA      Z       answers     TTLs    rejected
+
+   Note that all field names are not used. If you do not have a field, please give it an appropriate default
+   value as defined by the Zeek format (https://docs.zeek.org/en/master/logs/dns.html).
+```
 
 ## Supported File Formats
 
@@ -104,7 +145,7 @@ NetworkSage currently supports uploading the following files (which will be conv
 
 * PCAP
 * PCAPNG
-* Zeek (conn.log and dns.log)
+* Zeek (conn.log and dns.log in TSV or JSON formatting; see prior section for details)
 * Secflow
 
 If you have a format that you'd like us to support, please review our [FAQs](https://www.seclarity.io/resources/faqs/) and contact `support at seclarity [.] io`.

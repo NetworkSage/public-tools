@@ -2,7 +2,8 @@
     Copyright (c) 2021 David Pearson (david@seclarity.io)
     Date: 06/03/2021
     This file contains the ZeekFlow class, which captures the fields that are found in a Zeek flow from the conn.log
-    file. Formatting should always look like the following ("field #" lines are my annotation):
+    file. Formatting should always look like the following ("field #" lines are my annotation) _UNLESS_ it is a JSON
+    Zeek file:
 
         Field #  1       2        3                 4               5
                 ts      uid     id.orig_h       id.orig_p       id.resp_h
@@ -33,35 +34,75 @@
 import copy
 
 class ZeekFlow():
-    def __init__(self, flowdata):
-        self.secflow_key = flowdata[2] + ":" + flowdata[3]  # useful for later conversion, but also use it here.
-        self.timestamp = float(flowdata[0])
-        self.unique_id = flowdata[1]
-        self.source_ip = flowdata[2]
-        self.source_port = flowdata[3]
-        self.dest_ip = flowdata[4]
-        self.dest_port = flowdata[5]
-        self.trans_proto = flowdata[6]
-        self.protocol_information = ""
-        if self.trans_proto == "icmp":
-            self.source_port = ""
-            self.dest_port = ""
-            self.protocol_information = "ICMP"
-            self.secflow_key = self.source_ip+":"+self.protocol_information+"-"+self.dest_ip+":"+self.protocol_information
-        self.service = flowdata[7]
-        self.duration = flowdata[8]
-        self.source_bytes = flowdata[9]
-        self.dest_bytes = flowdata[10]
-        self.connection_state = flowdata[11]
-        self.local_orig = flowdata[12]
-        self.local_resp = flowdata[13]
-        self.missed_bytes = flowdata[14]
-        self.history = flowdata[15]
-        self.source_pkts = flowdata[16]
-        self.source_ip_bytes = flowdata[17]
-        self.dest_pkts = flowdata[18]
-        self.dest_ip_bytes = flowdata[19]
-        self.tunnel_parents = flowdata[20]
+    def __init__(self, flowdata, is_json=False):
+        if is_json:
+            try:
+                self.secflow_key = f'{flowdata["id.orig_h"]}:{flowdata["id.orig_p"]}'
+                self.timestamp = float(flowdata["ts"])
+                self.unique_id = f'{flowdata["uid"]}'
+                self.source_ip = f'{flowdata["id.orig_h"]}'
+                self.source_port = f'{flowdata["id.orig_p"]}'
+                self.dest_ip = f'{flowdata["id.resp_h"]}'
+                self.dest_port = f'{flowdata["id.resp_p"]}'
+                self.trans_proto = f'{flowdata["proto"]}' if "proto" in flowdata else "-"
+                self.protocol_information = ""
+                if self.trans_proto == "icmp":
+                    self.source_port = ""
+                    self.dest_port = ""
+                    self.protocol_information = "ICMP"
+                    self.secflow_key = f'{self.source_ip}:{self.protocol_information}-{self.dest_ip}:{self.protocol_information}'
+                self.service = f'{flowdata["service"]}' if "service" in flowdata else "-"
+                self.duration = f'{flowdata["duration"]}' if "duration" in flowdata else "-"
+                self.source_bytes = f'{flowdata["orig_bytes"]}' if "orig_bytes" in flowdata else "-"
+                self.dest_bytes = f'{flowdata["resp_bytes"]}' if "resp_bytes" in flowdata else "-"
+                self.connection_state = f'{flowdata["conn_state"]}' if "conn_state" in flowdata else "-"
+                self.local_orig = f'{flowdata["local_orig"]}' if "local_orig" in flowdata else "-"
+                self.local_resp = f'{flowdata["local_resp"]}' if "local_resp" in flowdata else "-"
+                self.missed_bytes = f'{flowdata["missed_bytes"]}' if "missed_bytes" in flowdata else "0"
+                self.history = f'{flowdata["history"]}' if "history" in flowdata else "-"
+                self.source_pkts = f'{flowdata["orig_pkts"]}' if "orig_pkts" in flowdata else "0"
+                self.source_ip_bytes = f'{flowdata["orig_ip_bytes"]}' if "orig_ip_bytes" in flowdata else "0"
+                self.dest_pkts = f'{flowdata["resp_pkts"]}' if "resp_pkts" in flowdata else "0"
+                self.dest_ip_bytes = f'{flowdata["resp_ip_bytes"]}' if "resp_ip_bytes" in flowdata else "0"
+                self.tunnel_parents = f'{flowdata["tunnel_parents"]}' if "tunnel_parents" in flowdata else "-"
+            except Exception as e:
+                print("Something went wrong while trying to parse JSON record for Zeek:\n{}".format(e))
+                self.secflow_key = None
+        else:
+            try:
+                # TSV format matching the field as structured at top of this file
+                self.secflow_key = flowdata[2] + ":" + flowdata[3]  # useful for later conversion, but also use it here.
+                self.timestamp = float(flowdata[0])
+                self.unique_id = flowdata[1]
+                self.source_ip = flowdata[2]
+                self.source_port = flowdata[3]
+                self.dest_ip = flowdata[4]
+                self.dest_port = flowdata[5]
+                self.trans_proto = flowdata[6]
+                self.protocol_information = ""
+                if self.trans_proto == "icmp":
+                    self.source_port = ""
+                    self.dest_port = ""
+                    self.protocol_information = "ICMP"
+                    self.secflow_key = self.source_ip+":"+self.protocol_information+"-"+self.dest_ip+":"+self.protocol_information
+                self.service = flowdata[7]
+                self.duration = flowdata[8]
+                self.source_bytes = flowdata[9]
+                self.dest_bytes = flowdata[10]
+                self.connection_state = flowdata[11]
+                self.local_orig = flowdata[12]
+                self.local_resp = flowdata[13]
+                self.missed_bytes = flowdata[14]
+                self.history = flowdata[15]
+                self.source_pkts = flowdata[16]
+                self.source_ip_bytes = flowdata[17]
+                self.dest_pkts = flowdata[18]
+                self.dest_ip_bytes = flowdata[19]
+                self.tunnel_parents = flowdata[20]
+            except Exception as e:
+                print("Something went wrong while trying to parse plaintext record for Zeek:\n{}".format(e))
+                self.secflow_key = None
+
 
     def flip_zeek_order(self):
         orig_zeek_flow = copy.deepcopy(self)

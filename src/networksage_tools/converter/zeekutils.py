@@ -8,6 +8,7 @@
     See the accompanying LICENSE file for more information.
 """
 
+import json
 import re
 import sys
 import magic
@@ -36,13 +37,19 @@ def store_zeekflows(utils):
     """Takes a Zeek file, removes the header lines, and stores the input as a dictionary. We store each line in the file
        as a flow, but then we store each flow object by the key used for secFlows.
     """
-
+    is_json = True if utils.file_format is not None and utils.file_format == "JSON data" else False
     with open(utils.original_filepath) as infile:
         for line in infile:
             if line.startswith("#"):  # it's a comment line
                 continue
-            flowdata = line.strip().split("\t")
-            zeekflow_object = zeekflow.ZeekFlow(flowdata)  # an individual line, which actually doesn't always capture all of the data for a 4-tuple.
+            if is_json:  # restore the dict
+                flowdata = json.loads(line)
+            else:
+                flowdata = line.strip().split("\t")
+            zeekflow_object = zeekflow.ZeekFlow(flowdata, is_json)  # an individual line, which actually doesn't always capture all of the data for a 4-tuple.
+            if zeekflow_object.secflow_key is None:
+                print("Failed to capture key for Zeek flow object; skipping record. Please see errors before this!")
+                continue
             if zeekflow_object.secflow_key not in utils.zeekflows.keys():
                 utils.zeekflows[zeekflow_object.secflow_key] = []
             utils.zeekflows[zeekflow_object.secflow_key] += [(zeekflow_object)]
@@ -191,8 +198,9 @@ def convert_zeek_to_secflow(utils):
 def validate_file_format(utils):
     """Validate if file is an ASCII text file -- very weak check for Zeek, unfortunately.
     """
-    if not re.match(r"^ASCII text$", magic.from_file(utils.original_filepath)):
-        print("Error:", utils.original_filepath + ",", "of type", magic.from_file(utils.original_filepath),
+    utils.file_format = magic.from_file(utils.original_filepath)
+    if not re.match(r"^(ASCII text|JSON data)$", utils.file_format):
+        print("Error:", utils.original_filepath + ",", "of type", utils.file_format,
               "is not an accepted file type.")
         sys.exit(1)
 
