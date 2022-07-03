@@ -133,6 +133,80 @@ class DnsService:
                     self.questions[q_name].add((source_port, start_time, answers))
 
 
+    def collect_dns_records_from_interflow_sample(self):
+        """Takes an Interflow sample that can contain various types of records other than DNS, then creates and returns
+           a dictionary of lists of tuples of packet source ports (for later filtering of local lookups), start times
+           (for use later in figuring out which DNS name to use) and A or PTR record DNS resolutions found in the file.
+           The resolutions are stored by name as follows:
+              self.questions["someDomain.tld."]=[(someSrcPort, someTimestamp, "7.8.9.10"),(someSrcPort, someTimestamp, "1.2.3.4")]
+              self.questions["4.3.2.1.in-addr.arpa."]=[(someSrcPort, someTimestamp, "someOtherDomain.tld.")]
+           TODO: Handle PTR records!
+        """
+        query_type_mappings = {"A": "1"}
+        is_json = True if self.utils.file_format is not None and self.utils.file_format == "JSON data" else False
+        with open(self.utils.original_filepath) as infile:
+            for line in infile:
+                if line.startswith("#"):  # it's a comment line
+                    continue
+                if is_json:  # restore the dict
+                    flowdata = json.loads(line)
+                else:
+                    print("Error: format doesn't seem to match expected JSON data. Not collecting DNS records.")
+                    return None
+                if "appid_name" not in flowdata.keys() or flowdata["appid_name"].lower() != "dns":
+                    continue  # ignore everything that's not DNS here
+                # TODO: Collect the appropriate fields we need (similarly to below) to populate self.questions dict!
+                try:
+                    start_time = float(flowdata["timestamp"])
+                    source_port = f'{flowdata["srcport"]}'
+                    dns_record = flowdata["metadata"]
+                    request = dns_record["request"]
+                    response = dns_record["response"]
+                    q_name = f'{request["query"]}.'
+                    q_class = f'{request["query_class"]}' if "query_class" in request else "-"
+                    if "query_type" in request:
+                        try:
+                            q_type = f'{query_type_mappings[request["query_type"]]}'
+                        except:
+                            print(f"Skipping unhandled DNS query type {request['query_type']}")
+                            q_type = "-"
+                    else:
+                        q_type = "-"
+                    roundtrip_time = f'{response["response_time"]}' if "response_time" in response else "-"
+                    rcode_name = f'{response["reply_code"]}' if "reply_code" in response else "NOERROR"
+                    if "answers" in response and type(response["answers"]) == list:
+                        answers = ""
+                        for answer in response["answers"]:
+                            if "name" in answer and answer["name"] != "":
+                                answers += f"{answer['name']},"
+                        answers = answers[:-1] if answers.endswith(",") else answers
+                    else:
+                        answers = "-"
+                except Exception as e:
+                    print("Something failed while parsing Interflow JSON data. Skipping line:\n{}".format(e))
+                    continue  # something didn't parse right
+                internet_a_record = False
+                other_unknown_collectible_record = False
+                if q_type == "1": # we only want successful DNS lookups for A records.
+                    internet_a_record = True
+                elif roundtrip_time == "-" and rcode_name == "No Error":
+                    other_unknown_collectible_record = True
+                else: # everything else should be thrown away
+                    continue
+                if q_name not in self.questions.keys():
+                    self.questions[q_name] = set()
+                if answers.find(",") != -1:  # multiple answers
+                    answers_list = answers.split(",")
+                    for answer in answers_list:
+                        try:
+                            self.questions[q_name].add((source_port, start_time, str(ipaddress.ip_address(answer))))
+                        except:  # it wasn't an IP address, so we'll skip collecting it
+                            #print("Had an error with", answer)
+                            continue
+                else:
+                    self.questions[q_name].add((source_port, start_time, answers))
+
+
     def parse_dns_records_from_capture_file(self):
         """Takes a capture file, then creates and returns a dictionary of lists of tuples of packet source ports (for
            use in filtering later), start times (for use later in figuring out which DNS name to use) and A or PTR
@@ -283,21 +357,28 @@ class DnsService:
         """Takes the file we're analyzing and uses any DNS information contained in it to passively name as many
            of the external IP addresses as possible.
         """
-        if not self.utils.zeekflows and self.utils.original_filepath:  # we're dealing with PCAP data
+        if self.utils.sample_type is None:
+            print("Something went wrong while trying to identify sample type.")
+            return None
+        if self.utils.sample_type == "PCAP" and self.utils.original_filepath:  # we're dealing with PCAP data
             # collect all of the active external IP addresses that need to be identified (if possible) passively.
             iputils.collect_active_external_ips_from_capture_file(self.utils)
 
             # collect all of the DNS records we see in our capture file
             self.parse_dns_records_from_capture_file()
-        elif self.utils.zeekflows:  # this is Zeek data
+        elif self.utils.sample_type == "Zeek":  # this is Zeek data
             # collect all active external IP addresses that need to be identified
             for secflow in self.utils.secflows.keys():
                 if not iputils.check_if_local_ip(str(self.utils.secflows[secflow].dest_ip)):
                     self.utils.active_external_ips.add(self.utils.secflows[secflow].dest_ip)
-
             # collect all DNS questions from DNS log, if it exists
             if self.dns_logfile_path is not None:
                 self.parse_dns_records_from_dns_log()
+        elif self.utils.sample_type == "Interflow":  # Stellar Cyber Interflow data
+            for secflow in self.utils.secflows.keys():
+                if not iputils.check_if_local_ip(str(self.utils.secflows[secflow].dest_ip)):
+                    self.utils.active_external_ips.add(self.utils.secflows[secflow].dest_ip)
+            # we've already collected DNS records earlier in this pipeline, so now we just need to use them
         elif self.utils.is_streaming: #we're dealing with streaming data
             for secflow in self.utils.secflows.keys():
                 if not iputils.check_if_local_ip(str(self.utils.secflows[secflow].dest_ip)):
@@ -355,6 +436,7 @@ class DnsService:
     def map_destination_ips_to_names(self):
         """Rewrite destination IPs (i.e. the thing on the Internet, generally) with names whenever possible.
            The strategy for doing this as correctly as possible is as follows:
+                0. If we already have naming information in a flow/session (such as in Interflow), use it.
                 1. Replace any destination IPs that used passive DNS for the EXACT session (by time) from current
                    file.
                 2. (streaming-specific) If a short-term passive DNS file exists, see if there is information in there
@@ -413,6 +495,10 @@ class DnsService:
         with open(short_term_pdns_file, "wb") as stpdf_handle: # we actually do plan to overwrite it every time so that we can keep updates sanely
             for secflow in self.utils.secflows.keys():
                 named = False  # keep track of whether we've named something each time
+                if self.utils.secflows[secflow].dest_name != "":  # we already have naming from the session itself
+                    self.utils.secflows[secflow].destination_name_source = "session"
+                    named = True
+                    continue
                 flow_ip = self.utils.secflows[secflow].dest_ip  # local var to make things less verbose in this loop
                 if flow_ip in self.passive_dns_names_dict.keys():
                     try:

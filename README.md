@@ -75,7 +75,7 @@ Note that the above will run in perpetuity, capturing packets from the interface
 ### B. Standalone Converter
 **module name:** `converter`
 
-This module allows you to convert captured network traffic from any of our supported formats (currently PCAP, PCAPNG, and Zeek) into unenriched Secflows (Secflows without flow category labels). This is useful if you already have network telemetry that you'd like to upload to NetworkSage, but you don't want to upload the original file (for privacy, size, or other reasons).
+This module allows you to convert captured network traffic from any of our supported formats (currently PCAP, PCAPNG, Zeek, and Interflow) into unenriched Secflows (Secflows without flow category labels). This is useful if you already have network telemetry that you'd like to upload to NetworkSage, but you don't want to upload the original file (for privacy, size, or other reasons).
 
 To import this module into your project, type the following:
 ```python3
@@ -139,6 +139,22 @@ For `dns.log` files (again, if you're *not* using JSON), make sure that the file
    value as defined by the Zeek format (https://docs.zeek.org/en/master/logs/dns.html).
 ```
 
+`NOTE:`
+As of v1.1.0 of this package, we now support Interflow logs in JSON format.
+
+To convert an Interflow log into an unenriched Secflow file, simply enter the following:
+
+```python3
+convert.convert_interflow(<path_to_interflow_log>) 
+```
+Any DNS Interflows should also be passed in within the Interflow log.
+
+Note that there are MANY fields in Interflow that will not be a part of this converter, as they are not necessary to convert to Secflow. The log file is expected to contain one Interflow per line in JSON format. For non-DNS records, below is an example Interflow record that includes only the fields we need:
+
+```json
+    {"timestamp": 1656517273641, "duration": 401, "_id": "6c0liABC8qtQm3loQr7H", "msg_class": "interflow_traffic", "srcip": "172.18.40.120", "srcport": 55503,"dstip": "142.251.40.65", "dstip_host": "ci3.googleusercontent.com", "dstport": 80, "proto_name": "tcp", "outbytes_total": 0, "inpkts_delta": 5, "outpkts_delta": 0, "inbytes_total": 17765}
+```
+
 ## Supported File Formats
 
 NetworkSage currently supports uploading the following files (which will be converted into our Secflow format):
@@ -146,6 +162,7 @@ NetworkSage currently supports uploading the following files (which will be conv
 * PCAP
 * PCAPNG
 * Zeek (conn.log and dns.log in TSV or JSON formatting; see prior section for details)
+* Interflow (as JSON, one Interflow record per line)
 * Secflow
 
 If you have a format that you'd like us to support, please review our [FAQs](https://www.seclarity.io/resources/faqs/) and contact `support at seclarity [.] io`.

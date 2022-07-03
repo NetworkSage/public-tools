@@ -20,6 +20,8 @@ class PacketInfo():
             6))  # unix seconds.microseconds format
         self.is_ipv4_by_ethernet_layer = (pkt[12:14] == b"\x08\x00")
         self.is_ipv4_by_ip_layer = (((pkt[14] ^ 64) >> 4) == 0)
+        #self.is_ipv6_by_ethernet_layer = (pkt[12:14] == b"\x08\x00")
+        #self.is_ipv6_by_ip_layer = (((pkt[14] ^ 64) >> 4) == 0)
         self.ip_layer_header_length = ((pkt[14] ^ 64) * 4)
         self.ip_layer_length_field = int.from_bytes(pkt[16:18], "big")
         self.transport_protocol = pkt[23]  # 6 for TCP, 17 for UDP
@@ -47,7 +49,7 @@ class PacketInfo():
             self.transport_layer_length = -1
             self.upper_layer_length = -1
         if utils is None:  # shouldn't happen
-            self.utils = utilities.Utilities("", " ")
+            self.utils = utilities.Utilities("", " ", sample_type="PCAP")
         else:
             self.utils = utils
 

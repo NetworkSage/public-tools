@@ -10,32 +10,15 @@
 
 import json
 import re
-import sys
-import magic
 from networksage_tools.common_utilities import iputils
 from networksage_tools.common_utilities import secflow
+from networksage_tools.converter import generic_flowutils
 from networksage_tools.converter import zeekflow
-
-
-def remove_local_traffic_from_zeek_file(utils):
-    """Removes the local traffic from the incoming Zeek file dictionary.
-    """
-    tmp_dict = dict()
-    for flow_group in utils.zeekflows.keys():
-        tmp_flowlist = []  # clear it each time through the group
-        for flow in utils.zeekflows[flow_group]:
-            if iputils.check_if_local_ip(flow.source_ip) and iputils.check_if_local_ip(flow.dest_ip):
-                # print("removing", flow.source_ip, "<->", flow.dest_ip, "from flows dictionary.")
-                continue
-            else:  # one of the sides is not local
-                tmp_flowlist += [flow]
-        tmp_dict[flow_group] = tmp_flowlist  # keep only the ones that aren't local-to-local
-    utils.zeekflows = tmp_dict
 
 
 def store_zeekflows(utils):
     """Takes a Zeek file, removes the header lines, and stores the input as a dictionary. We store each line in the file
-       as a flow, but then we store each flow object by the key used for secFlows.
+       as a generic flow, but then we store each flow object by the key used for secFlows.
     """
     is_json = True if utils.file_format is not None and utils.file_format == "JSON data" else False
     with open(utils.original_filepath) as infile:
@@ -50,21 +33,9 @@ def store_zeekflows(utils):
             if zeekflow_object.secflow_key is None:
                 print("Failed to capture key for Zeek flow object; skipping record. Please see errors before this!")
                 continue
-            if zeekflow_object.secflow_key not in utils.zeekflows.keys():
-                utils.zeekflows[zeekflow_object.secflow_key] = []
-            utils.zeekflows[zeekflow_object.secflow_key] += [(zeekflow_object)]
-
-
-def identify_zeekfile_start_time(utils):
-    """Takes a Zeek flows dictionary and finds the earliest time.
-    """
-    ts = float(99999999999)
-    for flow_group in utils.zeekflows.keys():
-        for flow in utils.zeekflows[flow_group]:
-            ts = min(ts, float(flow.timestamp))
-    utils.file_start_time = ts
-
-    # print("File start time:", self.file_start_time)
+            if zeekflow_object.secflow_key not in utils.genericflows.keys():
+                utils.genericflows[zeekflow_object.secflow_key] = []
+            utils.genericflows[zeekflow_object.secflow_key] += [(zeekflow_object)]
 
 
 def convert_zeek_to_secflow(utils):
@@ -78,7 +49,7 @@ def convert_zeek_to_secflow(utils):
        using a key requiring the unique 4-tuple of sourceIP:source_port+dest_ip:dest_port) is future work.
     """
 
-    for flow_group in utils.zeekflows.keys():
+    for flow_group in utils.genericflows.keys():
         # initialize a few variables to keep track of state inside flow groups
         max_nonservice_sb = 0
         max_service_sb = 0
@@ -86,11 +57,11 @@ def convert_zeek_to_secflow(utils):
         max_service_db = 0
 
         # sort the flows in a flow group by their start timestamp
-        utils.zeekflows[flow_group] = sorted(utils.zeekflows[flow_group], key=lambda x: x.timestamp)
+        utils.genericflows[flow_group] = sorted(utils.genericflows[flow_group], key=lambda x: x.timestamp)
 
         secflow_object = None  # start off empty
 
-        for zeekflow in utils.zeekflows[flow_group]:
+        for zeekflow in utils.genericflows[flow_group]:
             if iputils.check_if_local_ip(str(zeekflow.source_ip)) and iputils.check_if_local_ip(str(zeekflow.dest_ip)):
                 break  # we don't want local-to-local traffic!
             if iputils.check_if_local_ip(str(zeekflow.dest_ip)) and not iputils.check_if_local_ip(str(zeekflow.source_ip)):
@@ -125,7 +96,7 @@ def convert_zeek_to_secflow(utils):
                 secflow_object.max_ts = max(secflow_object.max_ts, zeekflow.timestamp + float(zeekflow.duration))
             else:
                 secflow_object.max_ts = max(secflow_object.max_ts, zeekflow.timestamp)
-            # get correct byte counts (according to our secFlow calcuations)
+            # get correct byte counts (according to our secFlow calculations)
             if zeekflow.service == "-":  # no service identified for this particular flow
                 if zeekflow.history == "S":  # and we have ONLY a SYN flag
                     max_nonservice_sb = 0
@@ -195,16 +166,6 @@ def convert_zeek_to_secflow(utils):
             secflow_object.set_secflow_duration()
 
 
-def validate_file_format(utils):
-    """Validate if file is an ASCII text file -- very weak check for Zeek, unfortunately.
-    """
-    utils.file_format = magic.from_file(utils.original_filepath)
-    if not re.match(r"^(ASCII text|JSON data)$", utils.file_format):
-        print("Error:", utils.original_filepath + ",", "of type", utils.file_format,
-              "is not an accepted file type.")
-        sys.exit(1)
-
-
 def zeek_2_secflows(utils):
     """Given a conn log that has been lightly validated, store the Zeek flows, remove any local traffic and convert the
        Zeek flows to secFlows.
@@ -212,15 +173,16 @@ def zeek_2_secflows(utils):
 
     # store file as a dict for easier processing
     store_zeekflows(utils)
-    if len(utils.zeekflows) == 0:
+
+    # remove local connections
+    generic_flowutils.remove_local_traffic_from_generic_flows(utils)
+
+    if len(utils.genericflows) == 0:
         print("No Zeek flows were found in file. No traffic was converted to Secflows.")
         return False
 
-    # remove local connections
-    remove_local_traffic_from_zeek_file(utils)
-
     # get file start time
-    identify_zeekfile_start_time(utils)
+    generic_flowutils.identify_earliest_flow_start_time(utils)
 
     # convert from Zeek to secFlow
     convert_zeek_to_secflow(utils)

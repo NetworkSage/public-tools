@@ -19,7 +19,7 @@ class Utilities():
     local_ips_reverse_regex = r"([0-9]{1,3})\.([0-9]{1,3})\.((1[6-9]\.172)|(2[0-9]\.172)|(3[0-1]\.172)|([0-9]{1,3}\.10)|(168\.192))\.in\-addr\.arpa\.$"
     ipv6_regex = r"(([1-9a-fA-F]{1,}:)"  # very basic, meant to filter out virtually anything right now. Also not currently used
 
-    def __init__(self, orig_fp, platform_type, output_dir=None):
+    def __init__(self, orig_fp, platform_type, output_dir=None, sample_type=None):
         self.active_external_ips = set()
         self.questions = dict()
         self.original_filepath = orig_fp
@@ -35,8 +35,17 @@ class Utilities():
         self.tmp_filepath = ""  # file to temporarily store just the secflows with proper formatting. Needed in order to have a consistent file to hash
         self.secflow_output_filepath = ""  # file to store the final output intended to be sent back to the caller
         self.sample_name = ""
+        self.sample_type = sample_type  # track the type of sample we're processing (Zeek, Interflow, PCAP, etc...)
         self.secflows_hash = ""  # used to store the hash of the secflows file
-        self.zeekflows = collections.OrderedDict()
+        """ Generic flows are flow objects that are partially-converted from their myriad original formats (such as Zeek
+            conn.log flows, Stellar Cyber Interflow flows, and so on) into the Secflow format. However, they are not yet
+            actually meaningful Secflows. So this interim generic state allows us to reuse code that needs to happen
+            across all of these various input flow types while keeping any necessary input-specific logic in the various
+            input-specific Python classes.
+        """
+        self.genericflows = collections.OrderedDict()
+        #self.zeekflows = collections.OrderedDict()
+        #self.interflows = collections.OrderedDict()
         self.file_format = None  # track format of data passed in
         self.packet_buffer = collections.deque() #create an empty buffer to store packets that have not yet been processed
         self.stop_thread = False #keep state of whether thread should be stopped
@@ -44,7 +53,7 @@ class Utilities():
     def cleanup_files(self):
         """Removes any files that were created in the interim but not needed for the final output.
         """
-        if not self.zeekflows:  # we were working with PCAP data
+        if not self.genericflows:  # we were working with PCAP data
             # delete the filtered file, if it exists
             try:
                 os.remove(self.filtered_filepath)
