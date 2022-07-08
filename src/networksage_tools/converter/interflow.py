@@ -37,7 +37,7 @@ class Interflow():
                 self.proposed_destname = f'{flowdata["dstip_host"]}' if "dstip_host" in flowdata else None
                 self.trans_proto = f'{flowdata["proto_name"]}' if "proto_name" in flowdata else "-"
                 self.protocol_information = ""
-                if self.trans_proto == "icmp": # TODO: is this how it's captured in Inteflow?
+                if self.trans_proto == "icmp":
                     self.source_port = ""
                     self.dest_port = ""
                     self.protocol_information = "ICMP"

@@ -157,7 +157,14 @@ class DnsService:
                     continue  # ignore everything that's not DNS here
                 # TODO: Collect the appropriate fields we need (similarly to below) to populate self.questions dict!
                 try:
-                    start_time = float(flowdata["timestamp"])
+                    if len(str(flowdata["timestamp"])) == 13:
+                        if "." not in str(flowdata["timestamp"]):
+                            start_time = float(flowdata["timestamp"]) / 1000.0
+                        else:
+                            print("Unrecognized timestamp format. Results may be wrong.")
+                            start_time = float(flowdata["timestamp"])
+                    elif len(str(flowdata["timestamp"])) == 10:
+                        start_time = float(flowdata["timestamp"])
                     source_port = f'{flowdata["srcport"]}'
                     dns_record = flowdata["metadata"]
                     request = dns_record["request"]
@@ -177,8 +184,9 @@ class DnsService:
                     if "answers" in response and type(response["answers"]) == list:
                         answers = ""
                         for answer in response["answers"]:
-                            if "name" in answer and answer["name"] != "":
-                                answers += f"{answer['name']},"
+                            if "host_type" in answer and answer["host_type"] in query_type_mappings.keys():
+                                if "host_addr" in answer:
+                                    answers += f"{answer['host_addr']},"
                         answers = answers[:-1] if answers.endswith(",") else answers
                     else:
                         answers = "-"
