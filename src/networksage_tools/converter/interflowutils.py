@@ -16,27 +16,28 @@ from networksage_tools.converter import interflow
 
 
 def store_interflows(utils):
-    """Takes a JSON file of Interflow records (one JSON record per line) and stores the fields that we need from the
-       input as a dictionary. Each record is stored as a genericflow object with each object accessible by the key used
-       for secFlows.
+    """Takes a JSON file of Interflow records (either one JSON record per line or a list of JSON records separated by
+       commas) and stores the fields that we need from the input as a dictionary. Each record is stored as a genericflow
+       object with each object accessible by the key used for secFlows.
     """
     is_json = True if utils.file_format is not None and utils.file_format == "JSON data" else False
     with open(utils.original_filepath) as infile:
-        for line in infile:
-            if line.startswith("#"):  # it's a comment line
-                continue
-            if is_json:  # restore the dict
-                flowdata = json.loads(line)
-            else:
-                print("Error: format doesn't seem to match expected JSON data.")
-                return None
-            if "msg_class" in flowdata.keys():
-                if flowdata["msg_class"] != "interflow_traffic":
-                    print("Skipping non-traffic Interflow record")
-                    continue
-            else:
-                print("No msg_class in this Interflow record. Skipping.")
-                continue
+        if is_json:
+            flows = []
+            for line in infile:
+                data = json.loads(line)
+                if type(data) == list:
+                    # list of flows, so capture them all
+                    flows = data
+                elif type(data) == dict:
+                    flows += [data]
+                else:
+                    print(f"Unrecognized JSON data {type(data)}")
+                    return None
+        else:
+            print("Expected JSON but did not get it. Quitting.")
+            return None
+        for flowdata in flows:
             interflow_object = interflow.Interflow(flowdata, is_json)
             if interflow_object.secflow_key is None:
                 print("Failed to capture key for Interflow object; skipping record. Please see errors before this!")
@@ -98,7 +99,6 @@ def convert_interflow_to_secflow(utils):
             secflow_object.set_secflow_duration()
 
 
-
 def interflow_2_secflows(utils, dns):
     """Given a JSON log file of Interflow records that has been lightly validated, store the Interflows, collect both
        local and public DNS lookups, remove any  local traffic, and convert the remaining Interflows to Secflows.
@@ -123,3 +123,31 @@ def interflow_2_secflows(utils, dns):
     # convert from Interflow to secFlow
     convert_interflow_to_secflow(utils)
     return True
+
+
+def json_extract(obj, key, dict_expected=False):
+    """Recursively fetch values from nested JSON. Code credit to Todd Birchard at
+    https://hackersandslackers.com/extract-data-from-complex-json-python/. Slightly modified to handle dicts as end
+    types.
+    """
+    arr = []
+    def extract(obj, arr, key, dict_expected=False):
+        """Recursively search for values of key in JSON tree."""
+        if isinstance(obj, dict):
+            for k, v in obj.items():
+                if isinstance(v, (dict, list)):
+                    if dict_expected and isinstance(v, dict):
+                        arr.append(v)
+                    else:
+                        extract(v, arr, key)
+                elif k == key:
+                    arr.append(v)
+        elif isinstance(obj, list):
+            for item in obj:
+                if dict_expected and isinstance(item, dict):
+                    arr.append(item)
+                else:
+                    extract(item, arr, key)
+        return arr
+    values = extract(obj, arr, key, dict_expected)
+    return values

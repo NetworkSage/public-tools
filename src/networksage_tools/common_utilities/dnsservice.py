@@ -18,6 +18,7 @@ from pathlib import Path
 from networksage_tools.common_utilities import iputils
 from networksage_tools.common_utilities import packet
 from networksage_tools.common_utilities import utilities
+from networksage_tools.converter import interflowutils
 
 class DnsService:
     def __init__(self, utils):
@@ -145,28 +146,37 @@ class DnsService:
         query_type_mappings = {"A": "1"}
         is_json = True if self.utils.file_format is not None and self.utils.file_format == "JSON data" else False
         with open(self.utils.original_filepath) as infile:
-            for line in infile:
-                if line.startswith("#"):  # it's a comment line
-                    continue
-                if is_json:  # restore the dict
-                    flowdata = json.loads(line)
-                else:
-                    print("Error: format doesn't seem to match expected JSON data. Not collecting DNS records.")
-                    return None
-                if "appid_name" not in flowdata.keys() or flowdata["appid_name"].lower() != "dns":
+            if is_json:
+                flows = []
+                for line in infile:
+                    data = json.loads(line)
+                    if type(data) == list:
+                        # list of flows, so capture them all
+                        flows = data
+                    elif type(data) == dict:
+                        flows += [data]
+                    else:
+                        print(f"Unrecognized JSON data {type(data)}")
+                        return None
+            else:
+                print("Expected JSON but did not get it. Quitting.")
+                return None
+            for flowdata in flows:
+                appid_vals = interflowutils.json_extract(flowdata, "appid_name")
+                if len(appid_vals) == 0 or appid_vals[0].lower() != "dns":
                     continue  # ignore everything that's not DNS here
-                # TODO: Collect the appropriate fields we need (similarly to below) to populate self.questions dict!
                 try:
-                    if len(str(flowdata["timestamp"])) == 13:
-                        if "." not in str(flowdata["timestamp"]):
-                            start_time = float(flowdata["timestamp"]) / 1000.0
+                    ts = interflowutils.json_extract(flowdata, "timestamp")[0]
+                    if len(str(ts)) == 13:
+                        if "." not in str(ts):
+                            start_time = float(ts) / 1000.0
                         else:
                             print("Unrecognized timestamp format. Results may be wrong.")
-                            start_time = float(flowdata["timestamp"])
-                    elif len(str(flowdata["timestamp"])) == 10:
-                        start_time = float(flowdata["timestamp"])
-                    source_port = f'{flowdata["srcport"]}'
-                    dns_record = flowdata["metadata"]
+                            start_time = float(ts)
+                    elif len(str(ts)) == 10:
+                        start_time = float(ts)
+                    source_port = f'{interflowutils.json_extract(flowdata, "srcport")[0]}'
+                    dns_record = interflowutils.json_extract(flowdata, "metadata", dict_expected=True)[0]
                     request = dns_record["request"]
                     response = dns_record["response"]
                     q_name = f'{request["query"]}.'
