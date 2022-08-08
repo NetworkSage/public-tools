@@ -149,10 +149,10 @@ convert.convert_interflow(<path_to_interflow_log>)
 ```
 Any DNS Interflows should also be passed in within the Interflow log.
 
-Note that there are MANY fields in Interflow that will not be a part of this converter, as they are not necessary to convert to Secflow. The log file is expected to contain one Interflow per line in JSON format. For non-DNS records, below is an example Interflow record that includes only the fields we need:
+Note that there are MANY fields in Interflow that will not be a part of this converter, as they are not necessary to convert to Secflow. The log file is expected to contain a comma-separated list of Interflow records in JSON format. For non-DNS records, below is an example Interflow record that includes only the fields we need:
 
 ```json
-    {"timestamp": 1656517273641, "duration": 401, "_id": "6c0liABC8qtQm3loQr7H", "msg_class": "interflow_traffic", "srcip": "172.18.40.120", "srcport": 55503,"dstip": "142.251.40.65", "dstip_host": "ci3.googleusercontent.com", "dstport": 80, "proto_name": "tcp", "outbytes_total": 0, "inpkts_delta": 5, "outpkts_delta": 0, "inbytes_total": 17765}
+    [{"timestamp": 1656517273641, "duration": 401, "_id": "6c0liABC8qtQm3loQr7H", "msg_class": "interflow_traffic", "srcip": "172.18.40.120", "srcport": 55503,"dstip": "142.251.40.65", "dstip_host": "ci3.googleusercontent.com", "dstport": 80, "proto_name": "tcp", "outbytes_total": 0, "inpkts_delta": 5, "outpkts_delta": 0, "inbytes_total": 17765}]
 ```
 
 ## Supported File Formats
@@ -162,7 +162,7 @@ NetworkSage currently supports uploading the following files (which will be conv
 * PCAP
 * PCAPNG
 * Zeek (conn.log and dns.log in TSV or JSON formatting; see prior section for details)
-* Interflow (as JSON, one Interflow record per line)
+* Interflow (as a comma-separated list of JSON)
 * Secflow
 
 If you have a format that you'd like us to support, please review our [FAQs](https://www.seclarity.io/resources/faqs/) and contact `support at seclarity [.] io`.

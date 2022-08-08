@@ -20,20 +20,51 @@ class Interflow():
         likely_ms = True  # the time information is likely in milliseconds, so fix up duration and timestamp
         if is_json:
             try:
-                srcip = interflowutils.json_extract(flowdata, "srcip")[0]
-                srcport = interflowutils.json_extract(flowdata, "srcport")[0]
-                dstip = interflowutils.json_extract(flowdata, "dstip")[0]
-                dstport = interflowutils.json_extract(flowdata, "dstport")[0]
-                ts = interflowutils.json_extract(flowdata, "timestamp")[0]
-                dstip_host_vals = interflowutils.json_extract(flowdata, "dstip_host")
-                proto_vals = interflowutils.json_extract(flowdata, "proto_name")
-                service_vals = interflowutils.json_extract(flowdata, "service")
+                missing = []  # collect fields we're missing
+                # absolutely mandatory fields
+                srcip_vals = interflowutils.json_extract(flowdata, "srcip")
+                srcport_vals = interflowutils.json_extract(flowdata, "srcport")
+                dstip_vals = interflowutils.json_extract(flowdata, "dstip")
+                dstport_vals = interflowutils.json_extract(flowdata, "dstport")
                 duration_vals = interflowutils.json_extract(flowdata, "duration")
+                ts_vals = interflowutils.json_extract(flowdata, "timestamp")
                 outbytes_vals = interflowutils.json_extract(flowdata, "outbytes_total")
                 inbytes_vals = interflowutils.json_extract(flowdata, "inbytes_total")
                 outpkts_vals = interflowutils.json_extract(flowdata, "outpkts_delta")
                 inpkts_vals = interflowutils.json_extract(flowdata, "inpkts_delta")
-                self.secflow_key = f'{srcip}:{srcport}'
+                if not srcip_vals:
+                    missing += ["srcip"]
+                if not srcport_vals:
+                    missing += ["srcport"]
+                if not dstip_vals:
+                    missing += ["dstip"]
+                if not dstport_vals:
+                    missing += ["dstport"]
+                if not duration_vals:
+                    missing += ["duration"]
+                if not ts_vals:
+                    missing += ["timestamp"]
+                if not outbytes_vals:
+                    missing += ["outbytes_total"]
+                if not inbytes_vals:
+                    missing += ["inbytes_total"]
+                if not outpkts_vals:
+                    missing += ["outpkts_delta"]
+                if not inpkts_vals:
+                    missing += ["inpkts_delta"]
+
+                if len(missing) > 0:
+                    print(f"Mandatory fields missing from JSON record for Interflow: {missing}")
+                    self.secflow_key = None
+                    return
+                # non-mandatory but desired fields
+                dstip_host_vals = interflowutils.json_extract(flowdata, "dstip_host")
+                proto_vals = interflowutils.json_extract(flowdata, "proto_name")
+                service_vals = interflowutils.json_extract(flowdata, "service")
+
+
+                self.secflow_key = f'{srcip_vals[0]}:{srcport_vals[0]}'
+                ts = ts_vals[0]
                 if len(str(ts)) == 13:
                     if "." not in str(ts):
                         self.timestamp = float(ts) / 1000.0
@@ -45,10 +76,10 @@ class Interflow():
                     likely_ms = False
                     self.timestamp = float(ts)
                 self.unique_id = f'{flowdata["_id"]}'
-                self.source_ip = f'{srcip}'
-                self.source_port = f'{srcport}'
-                self.dest_ip = f'{dstip}'
-                self.dest_port = f'{dstport}'
+                self.source_ip = f'{srcip_vals[0]}'
+                self.source_port = f'{srcport_vals[0]}'
+                self.dest_ip = f'{dstip_vals[0]}'
+                self.dest_port = f'{dstport_vals[0]}'
                 self.proposed_destname = f'{dstip_host_vals[0]}' if len(dstip_host_vals) > 0 else None
                 self.trans_proto = f'{proto_vals[0]}' if len(proto_vals) > 0 else "-"
                 self.protocol_information = ""
