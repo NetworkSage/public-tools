@@ -77,9 +77,19 @@ class DnsService:
         """
         is_json = True if self.utils.file_format is not None and self.utils.file_format == "JSON data" else False
         with open(self.dns_logfile_path, "r") as dns_logfile:
-            for line in dns_logfile:
-                if is_json:  # handle JSON
-                    dns_record = json.loads(line)
+            if is_json:
+                flows = []
+                for line in dns_logfile:
+                    data = json.loads(line)
+                    if type(data) == list:
+                        # list of flows, so capture them all
+                        flows = data
+                    elif type(data) == dict:
+                        flows += [data]
+                    else:
+                        print(f"Unrecognized JSON data {type(data)}")
+                        return None
+                for dns_record in flows:
                     try:
                         start_time = float(dns_record["ts"])
                         roundtrip_time = f'{dns_record["rtt"]}' if "rtt" in dns_record else "-"
@@ -93,7 +103,30 @@ class DnsService:
                     except Exception as e:
                         print("Something failed while parsing Zeek JSON data. Skipping line:\n{}".format(e))
                         continue  # something didn't parse right
-                else:
+                    internet_a_record = False
+                    other_unknown_collectible_record = False
+                    if q_class == "1" and q_type == "1": # we only want successful DNS lookups to the Internet for A records.
+                        internet_a_record = True
+                    elif roundtrip_time == "-" and rcode_name == "NOERROR": # these seem to occur when converting from PCAP to Zeek
+                        other_unknown_collectible_record = True
+                    else: # everything else should be thrown away
+                        continue
+
+                    if q_name not in self.questions.keys():
+                        self.questions[q_name] = set()
+                    if answers.find(",") != -1:  # multiple answers
+                        answers_list = answers.split(",")
+                        for answer in answers_list:
+                            try:
+                                self.questions[q_name].add((source_port, start_time, str(ipaddress.ip_address(answer))))
+                            except:  # it wasn't an IP address, so we'll skip collecting it
+                                #print("Had an error with", answer)
+                                continue
+                    else:
+                        self.questions[q_name].add((source_port, start_time, answers))
+            else:
+                # capture CSV format
+                for line in dns_logfile:
                     if line.startswith("#"):  # ignore comment lines
                         continue
                     try:
@@ -107,31 +140,29 @@ class DnsService:
                         rcode_name = dns_record[15]
                         answers = dns_record[21]
                     except Exception as e:
-                        print("Something failed while parsing Zeek JSON plaintext log data. Skipping line:\n{}".format(
-                                                                                                                    e)
-                        )
+                        print("Something failed while parsing Zeek plaintext log data. Skipping line:\n{}".format(e))
                         continue  # something didn't parse right
-                internet_a_record = False
-                other_unknown_collectible_record = False
-                if q_class == "1" and q_type == "1": # we only want successful DNS lookups to the Internet for A records.
-                    internet_a_record = True
-                elif roundtrip_time == "-" and rcode_name == "NOERROR": # these seem to occur when converting from PCAP to Zeek
-                    other_unknown_collectible_record = True
-                else: # everything else should be thrown away
-                    continue
+                    internet_a_record = False
+                    other_unknown_collectible_record = False
+                    if q_class == "1" and q_type == "1": # we only want successful DNS lookups to the Internet for A records.
+                        internet_a_record = True
+                    elif roundtrip_time == "-" and rcode_name == "NOERROR": # these seem to occur when converting from PCAP to Zeek
+                        other_unknown_collectible_record = True
+                    else: # everything else should be thrown away
+                        continue
 
-                if q_name not in self.questions.keys():
-                    self.questions[q_name] = set()
-                if answers.find(",") != -1:  # multiple answers
-                    answers_list = answers.split(",")
-                    for answer in answers_list:
-                        try:
-                            self.questions[q_name].add((source_port, start_time, str(ipaddress.ip_address(answer))))
-                        except:  # it wasn't an IP address, so we'll skip collecting it
-                            #print("Had an error with", answer)
-                            continue
-                else:
-                    self.questions[q_name].add((source_port, start_time, answers))
+                    if q_name not in self.questions.keys():
+                        self.questions[q_name] = set()
+                    if answers.find(",") != -1:  # multiple answers
+                        answers_list = answers.split(",")
+                        for answer in answers_list:
+                            try:
+                                self.questions[q_name].add((source_port, start_time, str(ipaddress.ip_address(answer))))
+                            except:  # it wasn't an IP address, so we'll skip collecting it
+                                #print("Had an error with", answer)
+                                continue
+                    else:
+                        self.questions[q_name].add((source_port, start_time, answers))
 
 
     def collect_dns_records_from_interflow_sample(self):

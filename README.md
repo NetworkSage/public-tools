@@ -93,11 +93,23 @@ convert.convert_pcap(<path_to_pcap_file>)
 To convert a Zeek Conn log into an unenriched Secflow file, simply enter the following:
 
 ```python3
-convert.convert_zeek(<path_to_conn_log>, <optional_path_to_dns_log>) 
+convert.convert_zeek(<path_to_conn_log>, zeek_dnsfile_location=<optional_path_to_dns_log>) 
 ```
 If you have (and would like to include) DNS information that was captured by Zeek, provide the `dns.log` in addition to the `conn.log`. Naming will be much enhanced by doing so.
 
 `NOTE:`
+As of v1.1.4 of this package, we now support Zeek and Interflow JSON files in two formats.
+1. Comma-Separated List of JSON records (preferred):
+```json
+[{json_record_1},{json_record_2}]
+```
+
+2. One JSON record per line:
+```json
+{json_record_1}
+{json_record_2}
+```
+
 As of v1.0.0 of this package, we now support Zeek files in [JSON](https://docs.zeek.org/en/master/log-formats.html#zeek-json-format-logs) and plaintext [TSV](https://docs.zeek.org/en/master/log-formats.html#zeek-tsv-format-logs) (i.e. the OG) formats. If you are uploading plaintext logs, please make sure that your `conn.log` files have the following fields in the following order (_Field #_ lines are annotations for clarity below and should *NOT* be included in the file):
 ```json
         Field #  1       2        3                 4               5

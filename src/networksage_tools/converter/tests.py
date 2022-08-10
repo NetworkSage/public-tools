@@ -98,6 +98,16 @@ def run_tests():
                         , "filename": "testCase19_icmp_plus_others_JSON.conn.log"
                         , "hasDNS": True
                     }
+                    ,
+                    { "inputType": "zeek"
+                        , "filename": "testCase20_oneFlowIsProcessable_newstyle_JSON.conn.log"
+                        , "hasDNS": False
+                    }
+                    ,
+                    { "inputType": "zeek"
+                        , "filename": "testCase21_icmp_plus_others_newstyle_JSON.conn.log"
+                        , "hasDNS": True
+                    }
                 ]
     test_dir = None
     with importlib.resources.files(__package__).joinpath("tests") as p:

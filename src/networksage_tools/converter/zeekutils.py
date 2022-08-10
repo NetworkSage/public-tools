@@ -18,24 +18,46 @@ from networksage_tools.converter import zeekflow
 
 def store_zeekflows(utils):
     """Takes a Zeek file, removes the header lines, and stores the input as a dictionary. We store each line in the file
-       as a generic flow, but then we store each flow object by the key used for secFlows.
+       as a generic flow, but then we store each flow object by the key used for secFlows. If the file is JSON, we
+       expect either one JSON record per line or a list of JSON records separated by commas) . The fields that we need
+       from the input are stored as a dictionary. Each record is stored as a genericflow object with each object
+       accessible by the key used for secFlows.
     """
     is_json = True if utils.file_format is not None and utils.file_format == "JSON data" else False
     with open(utils.original_filepath) as infile:
-        for line in infile:
-            if line.startswith("#"):  # it's a comment line
-                continue
-            if is_json:  # restore the dict
-                flowdata = json.loads(line)
-            else:
+        if is_json:
+            flows = []
+            for line in infile:
+                data = json.loads(line)
+                if type(data) == list:
+                    # list of flows, so capture them all
+                    flows = data
+                elif type(data) == dict:
+                    flows += [data]
+                else:
+                    print(f"Unrecognized JSON data {type(data)}")
+                    return None
+            for flowdata in flows:
+                zeekflow_object = zeekflow.ZeekFlow(flowdata, is_json)  # an individual line, which actually doesn't always capture all of the data for a 4-tuple.
+                if zeekflow_object.secflow_key is None:
+                    print("Failed to capture key for Zeek flow object; skipping record. Please see errors before this!")
+                    continue
+                if zeekflow_object.secflow_key not in utils.genericflows.keys():
+                    utils.genericflows[zeekflow_object.secflow_key] = []
+                utils.genericflows[zeekflow_object.secflow_key] += [(zeekflow_object)]
+        else:
+            # capture CSV format
+            for line in infile:
+                if line.startswith("#"):  # it's a comment line
+                    continue
                 flowdata = line.strip().split("\t")
-            zeekflow_object = zeekflow.ZeekFlow(flowdata, is_json)  # an individual line, which actually doesn't always capture all of the data for a 4-tuple.
-            if zeekflow_object.secflow_key is None:
-                print("Failed to capture key for Zeek flow object; skipping record. Please see errors before this!")
-                continue
-            if zeekflow_object.secflow_key not in utils.genericflows.keys():
-                utils.genericflows[zeekflow_object.secflow_key] = []
-            utils.genericflows[zeekflow_object.secflow_key] += [(zeekflow_object)]
+                zeekflow_object = zeekflow.ZeekFlow(flowdata, is_json)  # an individual line, which actually doesn't always capture all of the data for a 4-tuple.
+                if zeekflow_object.secflow_key is None:
+                    print("Failed to capture key for Zeek flow object; skipping record. Please see errors before this!")
+                    continue
+                if zeekflow_object.secflow_key not in utils.genericflows.keys():
+                    utils.genericflows[zeekflow_object.secflow_key] = []
+                utils.genericflows[zeekflow_object.secflow_key] += [(zeekflow_object)]
 
 
 def convert_zeek_to_secflow(utils):
