@@ -1,11 +1,9 @@
 """
-    Copyright (c) 2021 David Pearson (david@seclarity.io)
-    Date: 06/03/2021
+    Copyright 2021-2022 SeclarityIO, LLC
+    Code created by David Pearson (david@seclarity.io).
     This file contains utility functions that work with IP addresses.
 
-    This software is provided under the Apache Software License.
-    See the accompanying LICENSE file for more information.
-
+    For license information, please see the accompanying LICENSE file in the top-level directory of this repository.
     This file also leverages pcapy-ng, an Apache-licensed package that interfaces with the libpcap packet capture
     library. You can find more details about this repository at https://github.com/stamparm/pcapy-ng.
 """

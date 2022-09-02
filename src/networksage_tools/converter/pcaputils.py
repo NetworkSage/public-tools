@@ -1,16 +1,14 @@
 """
-    Copyright (c) 2021 David Pearson (david@seclarity.io)
-    Date: 06/02/2021
+    Copyright 2021-2022 SeclarityIO, LLC
+    Code created by David Pearson (david@seclarity.io).
     This file contains utilities that make processing a .cap, .pcap, or .pcapng file easy to do. Ultimately, the final
     function in this file will create secflows out of the incoming capture data.
 
-    This software is provided under the Apache Software License.
-    See the accompanying LICENSE file for more information.
+    For license information, please see the accompanying LICENSE file in the top-level directory of this repository.
 
     This file also leverages pcapy-ng, an Apache-licensed package that interfaces with the libpcap packet capture
     library. You can find more details about this repository at https://github.com/stamparm/pcapy-ng.
 """
-
 import re
 import sys
 import magic

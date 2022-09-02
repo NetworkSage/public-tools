@@ -1,12 +1,10 @@
 """
-    Copyright (c) 2022 David Pearson (david@seclarity.io)
-    Date: 02/03/2022
+    Copyright 2021-2022 SeclarityIO, LLC
+    Code created by David Pearson (david@seclarity.io).
     This file contains tests for the converter code.
 
-    This software is provided under the Apache Software License.
-    See the accompanying LICENSE file for more information.
+    For license information, please see the accompanying LICENSE file in the top-level directory of this repository.
 """
-
 import json
 import pathlib
 import importlib.resources

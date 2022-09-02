@@ -1,6 +1,6 @@
 """
-    Copyright (c) 2021 David Pearson (david@seclarity.io)
-    Date: 06/03/2021
+    Copyright 2021-2022 SeclarityIO, LLC
+    Code created by David Pearson (david@seclarity.io).
     This file contains the ZeekFlow class, which captures the fields that are found in a Zeek flow from the conn.log
     file. Formatting should always look like the following ("field #" lines are my annotation) _UNLESS_ it is a JSON
     Zeek file:
@@ -27,8 +27,7 @@
         Field #  18     19      20      21
                 1830    0       0       -
 
-    This software is provided under the Apache Software License.
-    See the accompanying LICENSE file for more information.
+    For license information, please see the accompanying LICENSE file in the top-level directory of this repository.
 """
 
 import copy

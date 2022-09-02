@@ -1,12 +1,11 @@
 """
-    Copyright (c) 2021 David Pearson (david@seclarity.io)
-    Date: 06/03/2021
+    Copyright 2021-2022 SeclarityIO, LLC
+    Code created by David Pearson (david@seclarity.io).
     This file contains the DnsService class, which keeps the state of all DNS data for the creation of
     well-named Secflows. This class has helper functions to control passive naming from the incoming
     file we're analyzing and from recently seen sessions.
 
-    This software is provided under the Apache Software License.
-    See the accompanying LICENSE file for more information.
+    For license information, please see the accompanying LICENSE file in the top-level directory of this repository.
 """
 
 import json

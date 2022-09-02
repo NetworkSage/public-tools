@@ -1,10 +1,9 @@
 """
-    Copyright (c) 2021-2022 David Pearson (david@seclarity.io)
-    Date: 07/01/2022
+    Copyright 2021-2022 SeclarityIO, LLC
+    Code created by David Pearson (david@seclarity.io).
     This file contains utilities that perform actions on flows of various types after they have been partially parsed.
 
-    This software is provided under the Apache Software License.
-    See the accompanying LICENSE file for more information.
+    For license information, please see the accompanying LICENSE file in the top-level directory of this repository.
 """
 
 import json

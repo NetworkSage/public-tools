@@ -1,6 +1,6 @@
 """
-    Copyright (c) 2021 David Pearson (david@seclarity.io)
-    Date: 06/03/2021
+    Copyright 2021-2022 SeclarityIO, LLC
+    Code created by David Pearson (david@seclarity.io).
     This file contains the Interflow class, which captures the fields that are found in Stellar Cyber's Interflow format
     for network traffic. Note that there are MANY fields in Interflow that will not be a part of this converter, as they
     are not necessary to convert to Secflow. The file is expected to contain one Interflow per line in JSON format, and
@@ -13,8 +13,7 @@
     whenever possible. Any Interflow records that have nonsensical (i.e. totalpackets = 0) or no packet and byte data
     will be ignored.
 
-    This software is provided under the Apache Software License.
-    See the accompanying LICENSE file for more information.
+    For license information, please see the accompanying LICENSE file in the top-level directory of this repository.
 """
 
 from networksage_tools.converter import interflowutils

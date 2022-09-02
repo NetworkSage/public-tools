@@ -1,13 +1,11 @@
 """
-    Copyright (c) 2021 David Pearson (david@seclarity.io)
-    Date: 12/20/2021
+    Copyright 2021-2022 SeclarityIO, LLC
+    Code created by David Pearson (david@seclarity.io).
     This file contains all of the main pieces needed to successfully stream unenriched secflows from a local system and
     upload them to NetworkSage.
 
-    This software is provided under the Apache Software License.
-    See the accompanying LICENSE file for more information.
+    For license information, please see the accompanying LICENSE file in the top-level directory of this repository.
 """
-
 import argparse
 import sys
 import pickle
@@ -19,7 +17,6 @@ import platform
 from pathlib import Path
 from filelock import SoftFileLock, Timeout
 from networksage_tools.streaming import captureutils
-from networksage_tools.common_utilities import dnsservice
 from networksage_tools.common_utilities import utilities
 
 def schedule_cleanup(**kwargs):

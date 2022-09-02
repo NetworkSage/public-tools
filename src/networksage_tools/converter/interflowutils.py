@@ -1,13 +1,12 @@
 """
-    Copyright (c) 2021 David Pearson (david@seclarity.io)
-    Date: 06/02/2021
+    Copyright 2021-2022 SeclarityIO, LLC
+    Code created by David Pearson (david@seclarity.io).
     This file contains utilities that allow a Stellar Cyber Interflow (and an optional dns) log to be converted into
     equivalent secFlows.
 
-    This software is provided under the Apache Software License.
+    For license information, please see the accompanying LICENSE file in the top-level directory of this repository.
     See the accompanying LICENSE file for more information.
 """
-
 import json
 from networksage_tools.common_utilities import iputils
 from networksage_tools.common_utilities import secflow
