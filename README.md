@@ -184,4 +184,4 @@ We have **a lot** of plans to change the face of security. If you want to be inv
 
 
 ## License
-This software is provided under the Apache Software License. See the accompanying LICENSE file for more information.
+This software is provided under the MIT Software License. See the accompanying LICENSE file for more information.
